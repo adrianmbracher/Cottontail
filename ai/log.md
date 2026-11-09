@@ -1,0 +1,980 @@
+2026-03-09T01:09:21Z Initial repository reconnaissance: read `ai/architecture.md`, mapped top-level structure and core Cottontail/Meadowlark modules, and wrote baseline notes/code map to `ai/notes.md`.
+2026-03-09T01:22:32Z Fixed standalone multithreaded TREC ranking helper in `src/ranker.cc` and adjusted `Stats::clone_()` in `src/stats.cc` so per-thread stats cloning works with started warrens.
+2026-03-09T01:51:29Z Added minimal session-facing helpers to `Stats` (`end()` and `translate(...)`) and updated batch ranking code to use them instead of reaching through to `Stats::warren()`.
+2026-03-09T02:18:56Z Expanded `ai/notes.md` with the agreed Warren/Meadow/Stats/Python MVP plan and updated `AGENTS.md` so work in `ai/` is generally permitted.
+2026-03-09T02:24:04Z Replaced `apps/working.cc` with a disposable `rank`-style CLI that uses the new batch `trec(...)` helper and emits surrogate TREC scores from rank order.
+2026-03-09T02:25:49Z Moved docno fallback probing into `src/ranker.cc::trec(...)` and simplified `apps/working.cc` to rely on the shared helper.
+2026-03-09T02:27:33Z Removed legacy docno fallback probing from `src/ranker.cc::trec(...)`; shared batch ranking now strictly relies on identifiers resolved by `Stats`.
+2026-03-10T20:45:53Z Performed repository reconnaissance: re-read `ai/architecture.md`, reviewed `README.md`, and surveyed top-level, `src/`, `meadowlark/`, and `test/` layout to refresh the current code map.
+2026-05-14T23:54:40Z Drafted `ai/plan.ai` for Hazel v1: a single-file, self-describing Fiver-to-Hazel conversion milestone.
+2026-05-14T23:57:08Z Updated `AGENTS.md` to direct future agents to read `ai/plan.ai` when it exists.
+2026-05-15T00:00:30Z Extended `ai/plan.ai` with a final `apps/fiver2hazel.cc` CLI step for converting Fiver pickle files using same-level `dna`.
+2026-05-15T17:57:23Z Implemented Hazel v1 Fiver writer methods, added `apps/fiver2hazel.cc`, updated the app build target, and verified `bazel build //apps:fiver2hazel`.
+2026-05-15T18:51:13Z Reworked Hazel writing to stream idx postings and compressed txt chunks directly to the shard, write per-blob directories at the end, patch blob headers, and verified `bazel build //apps:fiver2hazel`.
+2026-05-15T19:10:35Z Added configurable Hazel text compression chunk size, defaulting to 64 KiB, and exposed `--chunk-size` in `apps/fiver2hazel`.
+2026-05-15T19:12:41Z Updated `ai/plan.ai` with Hazel writer implementation notes for activation: Bigwig-controlled started Fivers, stream-and-patch blob layout, singleton postings, text chunk directory, and text lookup via `text_chunk_tag`.
+2026-05-15T23:59:56Z Added `ai/hazel.md` documenting the Hazel v1 file format, blob headers/directories, text chunking, and activation notes.
+2026-05-16T12:22:05Z Replaced the completed Hazel writer plan with a static shard activation plan centered on a reusable magic/DNA/blob envelope and dispatch by `warren` DNA.
+2026-05-16T12:26:00Z Updated Hazel/static shard writing to terminate the DNA section with a blank line before the top-level blob dictionary.
+2026-05-16T13:07:50Z Completed single-file burrow dispatch in `Warren::make(...)` and added inert Hazel/HazelIdx/HazelTxt activation stubs.
+2026-05-16T13:14:36Z Changed single-file burrow opening to read `#COTTONTAIL\n` as fixed magic bytes before line-reading DNA.
+2026-05-16T13:27:57Z Moved Hazel's local name/recipe extraction helper into `recipe.*` as a cooked-parameter-map overload.
+2026-05-16T16:01:09Z Added `ai/improvements.md` for potential cleanups and recorded the open `Txt::wrap(...)` design question.
+2026-05-16T16:04:54Z Added temporary Hazel activation DNA dump to stderr for short-term `apps/fluffy` testing.
+2026-05-16T16:07:26Z Corrected `ai/notes.md` to record Makefile targets as the preferred wrapper for consistent Bazel builds/tests.
+2026-05-16T16:45:22Z Added reusable single-file burrow envelope and current Hazel stub notes to `ai/hazel.md`, then replaced `ai/plan.ai` with the Featurizer name/recipe round-trip side quest plan.
+2026-05-16T20:07:07Z Changed Featurizer identity to virtual per-class names, made vocab pass through wrapped identity for persistent DNA, fixed tagging/json wrapper round-trips, and verified `make testing`.
+2026-05-16T20:17:02Z Added compositional featurizer round-trip tests for nested tagging, JSON wrapping tagging, and tagging wrapping JSON; reverified `make testing`.
+2026-05-16T20:28:22Z Renamed `ai/plan.ai` to `ai/plan.md` and updated current agent documentation references.
+2026-05-16T20:30:03Z Removed completed `ai/plan.md` after finishing the Featurizer name/recipe round-trip side quest.
+2026-05-16T20:43:33Z Recorded restart notes for completed Featurizer identity work; user verified Hazel dumped DNA error is gone.
+2026-05-17T15:58:51Z Revised Hazel v1 writer format: idx directories now use boundary triples with inline token singleton overloads, txt directories now use raw/compressed boundary pairs, updated `ai/hazel.md`, and verified `bazel build //apps:fiver2hazel`.
+2026-05-17T20:35:26Z Implemented first Hazel activation pass: real idx/txt blob parsing, no-cache locked idx reads, cached decompressed txt chunks, shallow Hazel cloning, compressed posting blob decoding, fixed the Hazel DNA separator, preserved owner Warren parameters in `fiver2hazel`, and verified `make testing` plus `bazel build //apps:fiver2hazel //apps:working`.
+2026-05-17T23:21:14Z Added `ai/plan.md` for the Meadow/Hazel ranking metadata issue: `TfIdfStats::make(...)` currently requires a Warren-global `stemmer` parameter write, which conflicts with immutable Hazel shards and the desired database-scoped metadata direction.
+2026-05-18T14:17:55Z Disabled the transitional `TfIdfStats::make(...)` Warren-global `stemmer` parameter write under `#if 0`, keeping the comment inside the disabled block, and verified `bazel build //apps:working`.
+2026-05-18T14:44:35Z Replaced `ai/plan.md` with an unfinished Hazel efficiency planning sketch, updated `ai/hazel.md` to reflect working first-pass activation and current efficiency work, and refreshed `ai/notes.md` with the threaded BM25 stress-test bottlenecks.
+2026-05-18T15:09:17Z Added `ai/hazel-progress.md` to track Hazel performance milestones; recorded the first successful standalone-Hazel `rank.sh` run with matching MRR and 43:36 wall time, and linked the progress log from `ai/plan.md` and `ai/notes.md`.
+2026-05-18T15:10:33Z Clarified in `ai/hazel-progress.md` that the Fiver-backed wall time mostly reflects loading the Fiver into memory and that the hot internal ranking timer is the more meaningful comparison.
+2026-05-18T16:20:48Z Added `src/read_gate.h` as the next Hazel efficiency starting point and documented it in `ai/plan.md`, `ai/hazel-progress.md`, and `ai/notes.md`; the helper is not yet wired into Hazel.
+2026-05-19T15:01:56Z Adjusted `Fiver::hazel` txt chunk map writing so txt directory offsets and compressed chunk ends are relative to the start of chunk space after the txt header.
+2026-05-19T15:44:36Z Simplified Hazel txt activation for the chunk-space-relative format: removed cross-chunk token-count skipping, kept at most two one-chunk tokenizer skips, and made `target_chunk_size` load-time validation only.
+2026-05-19T16:16:57Z Stripped `HazelTxt` in `src/hazel.cc` down to placeholder methods and minimal wiring so the text activation path can be rebuilt from a clean skeleton.
+2026-05-19T16:34:51Z Made `HazelTxt::clone_()` assert false, set an error, and return `nullptr`, documenting the intended non-cloning component model for Hazel text.
+2026-05-19T16:42:30Z Rewired Hazel assembly so `Hazel::make` constructs the `text_chunk_tag` hopper and passes it into `HazelTxt`, removing HazelTxt's stored idx and featurizer dependencies.
+2026-05-19T16:54:39Z Changed `HazelTxt` construction to take the Hazel filename plus txt blob offset/length, create its own `ReadGate`, and keep blob length scoped to the future map-loading step.
+2026-05-19T17:03:39Z Folded Hazel txt map loading into `HazelTxt::make`: it now reads the txt header, sets `offset_` to the absolute start of chunk space, loads and validates the chunk map, and sizes the fixed cache vector.
+2026-05-20T15:34:52Z Updated `ai/hazel.md` to document that txt `directory_offset` and directory `compressed_end` values are relative to chunk space after the txt header.
+2026-05-20T16:42:18Z Reworked `ai/plan.md` into a HazelTxt rebuild plan and sanity-checked it against the writer format, hopper semantics, tokenizer skipping, compressor APIs, and cache representation constraints.
+2026-05-20T18:58:29Z Performed repository reconnaissance: re-read architecture and current HazelTxt rebuild plan, surveyed top-level files/build setup, inspected Hazel activation stubs, ReadGate, and current notes.
+2026-05-20T19:07:30Z Rebuilt `HazelTxt` activation and translation in `src/hazel.cc`: txt header/map validation, token range discovery, ReadGate-backed decompression cache, and Fiver-style token-to-byte translation; verified `bazel build //...`.
+2026-05-20T19:10:12Z Fixed HazelTxt compressor recipe activation to use the writer's `compressor` / `compressor_recipe` txt keys; reverified `bazel build //apps:fiver2hazel //apps:working` and `bazel build //...`.
+2026-05-20T20:00:58Z Added the post-HazelTxt-rebuild `rank.sh` timing/correctness result to `ai/hazel-progress.md`: same MRR/queries as baseline, 2566150 ms internal timer, 43:17.83 wall time.
+2026-05-20T20:07:03Z Moved durable HazelTxt rebuild details into `ai/hazel.md`, refreshed Hazel notes, and reduced `ai/plan.md` to the next goal: plan HazelIdx caching.
+2026-05-21T00:16:46Z Changed `HazelTxt::load_token_range()` from `bool` to `void` because it only derives cached range state and has no error path; verified `bazel build //apps:working`.
+2026-05-21T19:54:37Z Replaced the HazelIdx caching placeholder in `ai/plan.md` with the agreed implementation plan: CacheRecord-backed Hazel cache, ReadGate loading, SimplePostingFactory cache decode, async hopper fills, and future Bigwig merged-cache direction.
+2026-05-21T19:58:59Z Added a future improvement note for deep internal error logging, including Hazel cache read/decode failure visibility when assertions are disabled.
+2026-05-21T21:21:54Z Re-read `ai/architecture.md` and the current HazelIdx cache loading plan, then inspected HazelIdx, SimpleIdx cache loading, ArrayHopper cache records, ReadGate, and SimplePosting compressed-blob decode paths before implementation.
+2026-05-21T21:27:07Z Implemented the first HazelIdx decoded posting cache, added SimplePostingFactory cache-line fill from compressed blobs with error returns, adjusted cache-backed ArrayHopper to allow singleton lists, and verified `bazel build //apps:working`.
+2026-05-21T21:33:11Z Recorded the first post-HazelIdx-cache `rank.sh` result in `ai/hazel-progress.md`: matching MRR/queries, 12794 ms internal timer, and 0:43.78 wall time.
+2026-05-21T21:43:02Z Increased HazelIdx `ReadGate` reader count from 4 to 16 for the next utilization experiment and verified `bazel build //apps:working`.
+2026-05-21T21:46:01Z Increased HazelTxt `ReadGate` reader count from the default 2 to 16 for the next utilization experiment and verified `bazel build //apps:working`.
+2026-05-21T21:46:34Z Recorded the HazelIdx-only 16-reader `rank.sh` result in `ai/hazel-progress.md`: matching MRR/queries, 11850 ms internal timer, and 0:42.91 wall time.
+2026-05-21T21:48:56Z Recorded the Hazel read-gate 16/16 `rank.sh` result in `ai/hazel-progress.md`: matching MRR/queries, 12111 ms internal timer, and 0:43.30 wall time on a noisy host.
+2026-05-21T21:53:51Z Updated `ai/notes.md` with the current Hazel cache/read-gate status and replaced `ai/plan.md` with a next-step Hazel regression test plan that requires user confirmation before coding.
+2026-05-21T22:01:45Z Recorded the Hazel read-gate 16/16 `rank.sh` result with 128 ranker threads: matching MRR/queries, 11801 ms internal timer, 0:42.88 wall time, and little change versus 54 threads.
+2026-05-21T22:41:51Z Recorded the Hazel read-gate 16/16 `rank.sh` result with 1 ranker thread: matching MRR/queries, 172635 ms internal timer, 3:23.65 wall time, and 101% CPU.
+2026-05-22T15:54:18+00:00 - Moved current plan.md to hazel-testing.md and created a new plan.md for planning to merge Hazels.
+2026-05-24T07:13:38+00:00 - Fixed `SimplePosting::invariants()` fostings size check to compare against postings size.
+2026-05-24T08:18:10+00:00 - Rewrote `ai/plan.md` with the agreed on-disk Hazel merge design and validation rules.
+2026-05-24T08:26:59+00:00 - Updated `ai/plan.md` with a Hazel merge implementation reading guide and clarified separator-newline handling.
+2026-05-24T08:30:26+00:00 - Added the `Fiver::hazel(...)` trailing-separator prerequisite to the Hazel merge plan.
+2026-05-25T00:54:49+00:00 - Implemented the first Working-based Hazel-to-Hazel merge primitive in `src/hazel.*`, added the `Fiver::hazel(...)` trailing separator write prerequisite, and verified `bazel build //...`.
+2026-05-25T01:33:16+00:00 - Reworked the Hazel merge implementation around input/output merge state structs with each input Hazel opened once; verified `bazel build //apps:fiver2hazel //apps:working` and `bazel build //...`.
+2026-05-25T21:51:32+00:00 - Added a Hazel text deletion improvement note covering logical translation semantics and future physical txt chunk reclamation.
+2026-05-25T21:52:17+00:00 - Broadened the text deletion improvement note from Hazel-only to Fiver/Hazel/Bigwig merge semantics.
+2026-05-25T21:54:57+00:00 - Added an exclusion merge semantics improvement note for possible outer interval merging of `null_feature` postings.
+2026-05-26T01:16:04+00:00 - Documented the struct-based Hazel merge implementation in `ai/hazel.md` and added restart notes for the active Hazel/stemmer investigations.
+2026-05-26T01:18:54+00:00 - Replaced the completed Hazel merge plan with a focused Meadowlark ranking stemmer bug plan.
+2026-05-26T01:31:12+00:00 - Corrected stale `ai/hazel.md` language that said Hazel/Hazel merge was deferred; Bigwig integration remains future work.
+2026-05-26T01:31:50+00:00 - Sanity-checked `ai/hazel.md` and refreshed stale activation/cache wording.
+2026-05-26T03:09:24Z - Fixed Meadowlark tf-idf stats stemmer/tokenizer ownership so metadata-created processors initialize the base `Stats` state; added a top-level agent rule to run only compile/build checks unless runtime experiments are explicitly requested.
+2026-05-26T03:50:00Z - Fixed the old Bigwig DNA stemmer loading shadowing bug so direct `Bigwig::make(...)` activation honors the `stemmer` parameter; verified `bazel build //apps:rank`.
+2026-05-26T03:59:46Z - Removed the Meadowlark creation-time write of the Warren-global `container` parameter; verified `bazel build //apps:meadowlark //apps:forage //apps:rank`.
+2026-05-26T05:19:23Z - Fixed a `TfIdfForager` null-check typo for `total_featurizer_` and made default `open_meadow(...)` delegate through the format-validating overload; verified `bazel build //apps:meadowlark //apps:forage //apps:rank`.
+2026-05-26T05:24:13Z - Refreshed restart notes for the completed Meadowlark stemmer/container work and replaced `ai/plan.md` with a planning-only Hazel merge testing plan that requires explicit user approval before coding.
+2026-05-26T05:52:08Z - Rewrote `apps/fiver2hazel.cc` as a burrow-directory converter: discover live Fiver shards, materialize matching Hazel shards, merge them into one final Hazel when needed, and verified `bazel build //apps:fiver2hazel`.
+2026-05-26T06:47:58Z - Replaced the old `apps/working.cc` scratch-ranking app with `apps/scratch.cc`, a no-merge Bigwig text-file builder that annotates `line:` and `file:` spans; verified `bazel build //apps:scratch //apps:fiver2hazel`.
+2026-05-26T07:21:40Z - Strengthened `ai/plan.md` and `ai/notes.md` verification guidance: agents should run compile/build checks only and must not run test cases, including `bazel test`, unless explicitly asked for that specific test run.
+2026-05-26T07:32:40Z - Added null, real, and bad-compressor Hazel regression profiles and marked the dedicated Hazel test target small; verified `bazel build //test:hazel_test`.
+2026-05-26T07:36:09Z - Narrowed the `*test*` ignore rule so top-level test-named files remain ignored while directories such as `test/` and their contents are visible to Git.
+2026-05-26T07:44:03Z - Finalized Hazel documentation around current format, activation, merge, and regression coverage; removed stale Hazel testing plan state and replaced `ai/plan.md` with the next-step Bigwig integration discussion plan.
+2026-05-26T07:53:51Z - Rewrote `ai/notes.md` to remove stale restart/test-planning notes and summarize the current repo map, Hazel state, verification rule, and Bigwig integration next step.
+2026-05-26T07:55:09Z - Added an `ai/improvements.md` note to split aggregate tests into focused Bazel targets, using `//test:hazel_test` as the pattern.
+2026-05-27T00:07:50+00:00 - Re-read the architecture, active Bigwig/Hazel integration plan, Hazel notes, Bigwig/Fluffle/Fiver/Hazel surfaces, build targets, and confirmed the worktree was clean before changing only this log entry.
+2026-05-27T00:58:23+00:00 - Added `--convert` and `--merge` modes plus conversion/merge/total timing output to `apps/fiver2hazel`; `--convert` removes existing Hazels, `--merge` prunes sequence-covered merged Hazels before merging; verified `bazel build //apps:fiver2hazel`.
+2026-05-27T01:54:05+00:00 - Recorded the 2026-05-27 `fiver2hazel a.meadow` conversion/merge timings and follow-up merged-Hazel `rank.sh` result in `ai/hazel-progress.md`.
+2026-05-27T02:11:00+00:00 - Restored deleted `apps/working.cc` and its `//apps:working` Bazel target from the parent of commit `0f31f41`; verified `bazel build //apps:working`.
+2026-05-27T02:21:43+00:00 - Rewrote `trec_docno(...)` to avoid per-call regex construction/replacement in the ranking output hot path; verified `bazel build //apps:working //apps:rank`.
+2026-05-27T02:40:47+00:00 - Adjusted `apps/working.cc` thread handling to default to twice hardware concurrency, accept positive requested thread counts, cap them at twice hardware concurrency, and warn on stderr when an explicit request is capped; verified `bazel build //apps:working`.
+2026-05-27T03:08:51+00:00 - Replaced `apps/rank.cc` with the `working`/`cottontail::trec(...)` driver, removed the temporary `apps/working.cc` source and `//apps:working` target, and verified `bazel build //apps:rank`.
+2026-05-27T07:35:00+00:00 - Added a Hazel merge idx fast path that raw-copies unique, non-excluded posting byte ranges and preserves inline singleton directory entries without decode/re-encode; verified `bazel build //apps:fiver2hazel //test:hazel_test`.
+2026-05-28T03:29:55+00:00 - Recorded the post-fast-path `fiver2hazel a.meadow` timing in `ai/hazel-progress.md`: Hazel merge improved from `611399` ms to `594594` ms.
+2026-05-28T03:43:14Z - Added double-buffered `AsyncReader` and `AsyncWriter` classes in `src/async.*` with a focused `books.json` copy test target; verified `bazel build //test:async_test` and `bazel build //test:tests`.
+2026-05-28T03:56:38Z - Wired `AsyncReader` into Hazel merge txt chunk copying and idx posting streaming while preserving random `read_at` for metadata/special pre-reads; verified `bazel build //apps:fiver2hazel //test:hazel_test //test:async_test` and `bazel build //test:tests`.
+2026-05-28T03:59:45Z - Changed `apps/fiver2hazel` to keep existing exact per-Fiver Hazel shards during conversion and to preserve intermediate Hazel shards after merge; verified `bazel build //apps:fiver2hazel`.
+2026-05-28T05:59:14Z - Documented the Hazel merge async I/O experiment in `ai/hazel-progress.md`: even on HDD it improved merge time by only about 1%, so it is not worth carrying forward without stronger evidence of an I/O bottleneck.
+2026-05-28T06:18:51Z - Cleaned `ai/notes.md` so durable repo notes keep the useful `fiver2hazel` intermediate-Hazel behavior and refer to the failed async read-ahead experiment without listing async helpers as current infrastructure.
+2026-05-29T01:29:10Z - Re-read architecture, active Bigwig/Hazel integration plan, Hazel notes, Bigwig/Fluffle/Fiver/Hazel touchpoints, and confirmed the worktree was clean during repository reconnaissance.
+2026-06-01T14:52:59Z - Replaced the broad Hazel/Bigwig discussion checklist in `ai/plan.md` with the concrete mixed-shard idx caching and hopper integration plan, retaining an explicit user-discussion gate before implementation.
+2026-06-01T14:58:27Z - Audited Hazel-facing documentation and refreshed stale current-state notes: `fiver2hazel` CLI modes, intermediate-Hazel preservation, Hazel txt activation wiring, Hazel merge raw-copy fast path, and the concrete mixed-shard Bigwig query-path review checkpoint.
+2026-06-01T15:03:32Z - Re-audited the Hazel/Bigwig discussion record, added the open sequence-stable `end()` -> `start()` Bigwig cache-lifetime question, and clarified that direct one-source hopper delegation does not bypass `NotContainedIn` deletion semantics.
+2026-06-01T15:04:25Z - Added durable notes for the current started-`BigwigIdx` merged-posting cache, its Fluffle-independent lifetime, and the existing raw feature/null-feature `NotContainedIn` deletion composition.
+2026-06-01T20:38:06Z - Removed `_V1` suffixes from Hazel section magic strings, centralized the stable strings in `src/hazel.h`, and updated the Hazel format note.
+2026-06-02T02:50:10Z - User regenerated and merged the `a.meadow` Hazel shards, verified the Hazel regression tests, and confirmed ranking correctness with `MRR @10: 0.18975923272843034` across `6980` queries.
+2026-06-02T17:12:18Z - Prepared ArrayHopper for deferred merged postings: added SimplePosting-backed binding, a CacheRecord-plus-SimplePosting completion path, private factory-backed construction, and verified `bazel build //...`.
+2026-06-03T16:01:24Z - Refactored batch TREC ranking so worker threads clone/start local Warrens and build explicit statistics views independently, removed `Stats::clone`, added `rank --statistics/--stats/-s name[:recipe]`, and verified `bazel build //apps:rank` plus `bazel build //...`.
+2026-06-03T18:04:47Z - Moved TREC thread-count policy fully into `trec`: `rank` now only validates `--threads` as a `size_t`, while `trec` caps worker threads by `2 * hardware_concurrency()` and query count, with `threads=0` selecting the cap; verified `bazel build //apps:rank`.
+2026-06-04T11:31:26Z - Clarified `ai/notes.md` so mid-flight Hazel integration plans are normal, recorded the already-landed ArrayHopper deferred-posting preparation, and replaced stale local-worktree notes with a git-status reminder.
+2026-06-05T19:11:27Z - Switched Bazel builds to C++20 via `.bazelrc`, removed obsolete per-target standard copts from app targets, and verified `bazel build //...`.
+2026-06-06T12:20:11Z - Added an unhooked `src/cache_gate.h` one-way `CacheGate` abstraction with default-open construction and separate atomic-wait and mutex/CV implementations; verified with a direct header compile and `bazel build //...`.
+2026-06-06T15:50:31Z - Fixed the in-progress `ArrayHopper` cache/posting wait-and-bind sketch: corrected member references, repaired vector-size assertions, made `CacheRecord` gates start closed, and verified `src/array_hopper.h` with a direct header compile.
+2026-06-06T17:30:12Z - Converted existing `CacheRecord` publication sites in SimpleIdx, SimplePosting compressed-blob decoding, and Hazel cache fills to call `release()` on the new cache gate; verified `bazel build //...`.
+2026-06-06T21:39:19Z - Updated `ai/notes.md` to reflect the final CacheGate, CacheRecord release, and ArrayHopper wait/bind shape before committing the side quest.
+2026-06-07T12:28:32Z - Added Hazel and Bigwig regression coverage for started Warren clones preserving a readable snapshot; verified `bazel build //test:hazel_test //test:tests`.
+2026-06-07T12:44:50Z - Added optional max-worker ranking-loop timing output to `trec` and wired `apps/rank` verbose timing through it; verified `bazel build //apps:rank`.
+2026-06-07T13:05:35Z - Refreshed restart notes for the Fiver/Hazel blend: recorded June 7 ranking measurements, updated clone/timer status, and narrowed the next Bigwig plan to a Fiver-only `PostingIterator` step before Hazel integration.
+2026-06-07T14:40:41Z - Performed repository reconnaissance: re-read architecture and active plan, surveyed current notes, build setup, Bigwig/Fiver/Hazel idx paths, SimplePosting merge code, ArrayHopper deferred binding, and CacheGate/CacheRecord state.
+2026-06-08T17:37:32Z - Added `ai/hazel-merge-plan.md`, recording the resumable Hazel merge design centered on `dst`/`dst.tmp`, `dst.pst`/`dst.dct` idx checkpoints, internal `HazelIdx::merge` and `HazelTxt::merge` helpers, and the single-process directory-authority assumption.
+2026-06-08T17:48:48Z - Clarified the Hazel merge plan: `dst` is a caller-supplied destination prefix, final assembly uses `dst.tmp` only, idx merge does not depend on Hazel runtime caches, and input DNA compatibility follows the existing normalized comparison.
+2026-06-08T17:57:56Z - Corrected the Hazel merge plan's DNA handling: input compatibility should not erase `parameters`, and merged output parameters should come from the caller/Fluffle parameter pointer or, if null, the last input Hazel.
+2026-06-08T22:25:13Z - Added `src/owsla.h`/`src/owsla.cc` and centralized Warren/Hazel shared tags, single-file magic, Hazel file-format records, sequence-name helpers, blob dictionary serialization, and POD serialization helpers; verified `bazel build //src:cottontail`.
+2026-06-09T16:06:24Z - Added the first static `HazelIdx::merge` implementation in `src/hazel.cc`, structured around checkpoint invariant setup, remaining-feature processing, and final idx blob emission; verified `bazel build //src:cottontail`.
+2026-06-09T20:11:11Z - Corrected `HazelIdx::merge` checkpoint recovery to keep only the `prefix.dct` entry prefix covered by actual `prefix.pst` bytes before truncating both checkpoint files; verified `bazel build //src:cottontail`.
+2026-06-10T15:11:34Z - Refreshed `ai/hazel-merge-plan.md` after diff review: helpers now produce checkpoint intermediates first, final assembly happens last, dct/pst recovery keeps only covered entries, and txt merge has durable intermediates.
+2026-06-10T20:18:06Z - Added an internal `HazelTxt::raw_text_length()` hook for Hazel merge text-length collection.
+2026-06-10T23:17:48Z - Added an internal `HazelTxt::merge` helper that appends a merged txt blob by copying compressed chunks from activated HazelTxt inputs and patching the txt blob header.
+2026-06-10T23:25:53Z - Tightened internal Hazel merge helpers to reject calls with fewer than two idx/txt inputs.
+2026-06-10T23:37:51Z - Added the activated-Hazel `Hazel::merge(hazels, dst, parameters, error)` overload, including destination/temp handling, DNA/sequence validation, HazelIdx/HazelTxt downcasts, resumable idx blob emission, txt blob emission, top-level dictionary patching, final link publication, and prefix cleanup; verified `bazel build //src:cottontail`.
+2026-06-11T11:17:49Z - Updated `ai/hazel-merge-plan.md` to describe the implemented activated-Hazel merge path, idx-only checkpointing, direct txt blob copying, DNA/parameter/sequence handling, and remaining legacy merge cleanup.
+2026-06-11T11:30:53Z - Replaced the old Working/name Hazel merge implementation with a thin adapter that activates Hazel files and calls the activated-Hazel overload with null parameters; pruned the legacy Hazel file-parsing merge helpers from `src/hazel.cc` and updated `ai/hazel-merge-plan.md`.
+2026-06-11T18:25:27Z - Recorded restartable Hazel merge follow-up ideas in `ai/improvements.md`, including restoring the unique-posting raw-copy fast path, revisiting checkpoint flush policy, simplifying repair semantics, and reducing successful-merge copy overhead.
+2026-06-11T18:53:16Z - Restored the simple `apps/fiver2hazel` single-burrow interface and changed Fiver/Hazel discovery to ignore non-shard sidecar files, considering only strict `fiver.<number>.<number>` and `hazel.<number>.<number>` names.
+2026-06-11T20:09:39Z - Recorded restartable Hazel merge smoke timings in `ai/hazel-progress.md`: clean no-interruption merge at `707052` ms, interrupted/resumed merge at `1044534` ms, and matching rank correctness results.
+2026-06-13T19:53:11Z - Narrowed the restartable Hazel merge follow-up note in `ai/improvements.md` to the unique-source Hazel feature fast path and removed broader checkpoint/flushing cleanup ideas.
+2026-06-13T20:20:09Z - Renamed the standalone restartable Hazel merge design note to `ai/hazel-merge-notes.md`, refreshed the current Hazel merge summary in `ai/hazel.md`, and recorded the repeated-interruption `a.meadow` merge/rank smoke result in `ai/hazel-progress.md`.
+2026-06-14T15:52:50Z - Added top-level `temp.md` as a temporary working plan for removing `SimplePosting::hopper()`, moving Hazel idx cache entries to waitable `SimplePosting`s, and shaping the future Fiver/Hazel mergepoint.
+2026-06-14T16:14:14Z - Aligned Fiver and Hazel on waitable `SimplePosting` storage: removed `SimplePosting::hopper()`/`enable_shared_from_this`, added concrete `posting(feature)` accessors, moved Hazel idx cache entries from `CacheRecord` to `SimplePosting`, and verified compile-only builds.
+2026-06-14T19:30:09Z - Integrated the top-level temporary posting-alignment plan into `ai/plan.md` and `ai/notes.md`, replacing the stale CacheRecord/PostingIterator plan with the next Bigwig deferred-`SimplePosting` merge-cache checkpoint.
+2026-06-14T19:42:33Z - Added top-level `temp.md` with the Fluffle-owned Bigwig merged-cache generation plan: readers capture a shared cache pointer at start, commits publish a new empty generation, and static indexes reuse one cache across starts.
+2026-06-14T19:47:12Z - Clarified `temp.md` that background Fiver consolidation is query-semantics preserving and should not invalidate the Fluffle cache generation; changes there would indicate a deeper consolidation bug.
+2026-06-14T19:52:06Z - Added the consolidation deletion invariant to `temp.md`: physically applied erasures and logical `NotContainedIn(feature, null_feature)` composition must remain observationally equivalent.
+2026-06-14T19:58:12Z - Implemented Fluffle-owned Bigwig cache generations: Fluffle now owns a shared `FluffleCache`, started Bigwig views capture that cache pointer, commits publish a new empty cache generation, and compile-only builds passed.
+2026-06-14T22:14:29Z - Gated `apps/trec-example` ranker startup on the first successful `tf_annotations` commit using `CacheGate`, wrapped automatic stats-selection failures with `No ranking statistics available in warren`, and verified `bazel build //src:cottontail //apps:trec-example`.
+2026-06-15T10:55:39Z - Added focused ArrayHopper singleton coverage for tau/rho/uat/ohr/L/R over minfinity, maxfinity, and less/equal/greater probes; verified `bazel build //test:tests`.
+2026-06-15T11:50:32Z - Extended ArrayHopper singleton coverage to a one-entry interval `[1000, 2000]`, including middle-span probes for tau/rho/uat/ohr/L/R; verified `bazel build //test:tests`.
+2026-06-15T20:39:36Z - Moved Fluffle cache invalidation from Bigwig ready/allocation to commit publication, so the cache generation changes when a kitten becomes a visible Fiver; verified `bazel build //src:cottontail //apps:trec-example //test:tests`.
+2026-06-15T21:49:27Z - Restored Fiver's one-entry posting fast path by having `FiverIdx::hopper_()` return `SingletonHopper` for in-memory singleton postings; verified `bazel build //src:cottontail //test:tests`.
+2026-06-15T21:59:56Z - Consolidated the top-level Bigwig cache draft into `ai/plan.md` and `ai/notes.md`, corrected cache invalidation to commit publication, set the next plan to no-merge Hazel shard visibility in Bigwig, and removed `temp.md`.
+2026-06-15T22:37:58Z - Tightened the Bigwig snapshot/cache invariant by removing the fallback that paired a valid local Warren snapshot with the current Fluffle cache; valid snapshots now assert that their cache pointer is present. Verified `bazel build //src:cottontail //test:tests`.
+2026-06-16T00:57:54Z - Updated `ai/plan.md` with the Owsla raw-posting mergepoint design: Fiver, Hazel, and Bigwig expose caller-thread `posting(feature)`, Bigwig caches only normal multi-shard posting merges, `text_chunk_tag` is mergeable but not stored in the generic feature cache, and deletion filtering remains the topmost hopper's responsibility.
+2026-06-16T12:50:43Z - Added header-only `OwslaCache` with Hazel-style get-or-reserve waitable `SimplePosting` semantics in `src/owsla.h`; verified `bazel build //src:cottontail`.
+2026-06-16T13:10:53Z - Wired `OwslaCache` into Fluffle, Hazel idx posting caching, and Bigwig multi-Fiver merged-posting caching; verified `bazel build //src:cottontail` and `bazel build //test:tests //test:hazel_test //apps:trec-example`.
+2026-06-16T13:32:25Z - Removed the dead feature-level `Fiver::merge(...)` hopper/cache overload and dropped Fiver's cache-specific includes; verified `bazel build //src:cottontail //test:tests //test:hazel_test //apps:trec-example`.
+2026-06-16T13:39:43Z - Recorded the user-reported post-`OwslaCache` three-Fiver `a.meadow` ranking measurement in `ai/hazel-progress.md`: max worker ranking loop `9062` ms, wall `1:18.15`, max RSS `21677512` KB, and unchanged MARCO dev-small MRR/query count.
+2026-06-16T13:44:24Z - Added the narrow `Owsla` Warren subclass, made Fiver inherit it, and changed Bigwig multi-Fiver cache misses to fill waitable `OwslaCache` postings asynchronously; verified `bazel build //src:cottontail` and `bazel build //test:tests //test:hazel_test //apps:trec-example`.
+2026-06-16T13:51:18Z - Moved Bigwig posting factory ownership out of `BigwigIdx`: Bigwig now creates/carries one `SimplePostingFactory` with its compressor state and passes it to started idx views; verified `bazel build //src:cottontail //test:tests //test:hazel_test //apps:trec-example`.
+2026-06-16T13:56:05Z - Recorded the user-reported post-async-cache-fill three-Fiver `a.meadow` ranking measurement in `ai/hazel-progress.md`: max worker ranking loop `9209` ms, wall `1:19.63`, max RSS `21808088` KB, and unchanged MARCO dev-small MRR/query count.
+2026-06-16T14:00:39Z - Recorded the user-reported single-Fiver `b.meadow` regression measurement in `ai/hazel-progress.md`: max worker ranking loop `6706` ms, wall `1:15.09`, max RSS `21598456` KB, and unchanged MARCO dev-small MRR/query count.
+2026-06-16T14:16:22Z - User reported regression tests passed; refreshed `ai/plan.md` and `ai/notes.md` to reflect the current Owsla/OwslaCache state, Bigwig-not-Owsla design, and recorded ranking regression evidence before push.
+2026-06-16T14:25:11Z - Made Hazel inherit from `Owsla` while preserving standalone Warren activation, updated the active plan/notes to record that Fiver and Hazel are both posting-capable Owsla shards, and verified `bazel build //src:cottontail //test:hazel_test`.
+2026-06-16T14:27:51Z - Replaced Bigwig's multi-Fiver `text_chunk_tag` VectorHopper path with a fresh uncached posting merge, preserving the rule that text chunk postings are not stored in `OwslaCache`; verified `bazel build //src:cottontail //test:hazel_test`.
+2026-06-16T14:36:36Z - Recorded user-reported regression checks after the Hazel-as-Owsla and uncached `text_chunk_tag` merge changes: `a.meadow/` loop `9256` ms, `b.meadow/` loop `6586` ms, merged Hazel loop `12455` ms, all with stable MRR/query counts.
+2026-06-16T15:46:39Z - Rewrote `ai/plan.md` around the staged Bigwig/Hazel integration plan: Hazel merge sidecar renaming, `sanitize` replacing `fiver_files`, no-merge Hazel activation, boundary Fiver-to-Hazel conversion, capped Hazel merge-worker policy, and the `apps/trec-example` stress target.
+2026-06-16T17:28:09+00:00 - Renamed Hazel merge sidecars to `mrg.hazel.A.B`, `pst.hazel.A.B`, and `dct.hazel.A.B` while retaining cleanup of old-style `hazel.A.B.*` sidecars; no Bigwig startup or sanitize behavior changed.
+2026-06-16T18:10:41+00:00 - Replaced Bigwig startup's old `fiver_files(...)` pass with `sanitize(...)`: strict Fiver/Hazel inventory, same-type contained-shard cleanup, startup garbage cleanup, Hazel sidecar grouping/recovery filtering, and Fiver-only activation from the sanitized inventory; verified compile-only builds.
+2026-06-16T19:35:05+00:00 - Refactored startup sanitization ownership: moved shared `OwslaShard`/`HazelMergeRecovery` records to `owsla`, added `Fiver::sanitize(...)` and `Hazel::sanitize(...)`, and reduced Bigwig sanitize to cross-family coordination with no Hazel sidecar-name knowledge; verified compile-only builds.
+2026-06-16T19:42:17+00:00 - Moved generic `temp.*` cleanup from `Fiver::sanitize(...)` to `Working` construction so all Working users get the same startup cleanup behavior.
+2026-06-16T19:55:44+00:00 - Tightened Bigwig sanitizer coordination into `combine_shards(...)`: validates sorted internal Fiver/Hazel inventories, enforces `[ Hazel prefix ][ Fiver suffix ]`, deletes boundary Fivers shadowed by the final Hazel, and rejects other mixed overlaps or out-of-order shards.
+2026-06-16T20:20:01+00:00 - Made `Working::remove(...)` follow the repository error convention and updated the Bigwig/Fiver/Hazel sanitizer cleanup paths to fail on unsuccessful working-file removal.
+2026-06-16T20:21:37+00:00 - Added a follow-up note to `ai/improvements.md` to audit working-directory file operations and route them through `Working` where possible.
+2026-06-16T21:01:10+00:00 - Recorded user-reported regression checks after the Bigwig startup sanitizer refactor: Fiver-only `a.meadow`/`b.meadow`, standalone Hazel `c.meadow/save3`, and post-consolidation/restart `a.meadow` all preserved expected ranking results.
+2026-06-17T12:03:47+00:00 - Activated sanitized Hazel shards in Bigwig startup: visible read snapshots now use `Owsla` children, Fluffle receives the Hazel prefix before the Fiver suffix, and focused Hazel-prefix/Fiver-suffix regression coverage was added; verified compile-only builds.
+2026-06-17T16:41:17+00:00 - Added Fluffle ownership for sanitized pending Hazel merge recoveries and copied `SanitizedInventory::hazel_merges` into it during Bigwig startup.
+2026-06-17T17:49:42+00:00 - Added `Owsla::estimated_size()`, wired Fiver to its cached storage estimate and Hazel to a cached activation-time idx/txt estimate, and switched Fiver merge selection to the common shard interface; verified compile-only builds.
+2026-06-17T18:07:22+00:00 - Added flexible Hazel estimate regression assertions: non-empty activated Hazels report positive estimated size, and a merged Hazel reports larger estimated size than each source Hazel individually; verified `bazel build //test:hazel_test`.
+2026-06-17T18:20:56+00:00 - Recorded user-reported MARCO dev-small regression checks showing direct single-Hazel ranking and Bigwig activation of the same single-Hazel directory produce identical MRR/query counts with comparable timing and memory.
+2026-06-17T18:22:59+00:00 - Recorded user-reported MARCO dev-small regression check for Bigwig activation of three live Hazel shards; MRR/query count matched the merged Hazel baseline while ranking time and memory increased versus a single merged Hazel.
+2026-06-17T18:25:00+00:00 - Recorded user-reported boundary-shadow cleanup check: startup accepted three live Hazels plus a redundant suffix Fiver covered by the final Hazel, removed the Fiver, and preserved MARCO dev-small MRR/query count.
+2026-06-17T18:27:06+00:00 - Recorded user-reported MARCO dev-small regression check for the intended mixed live shape: two Hazel prefix shards plus one Fiver suffix preserved MRR/query count.
+2026-06-17T18:30:31+00:00 - Recorded user-reported MARCO dev-small regression check for another intended mixed live shape: one Hazel prefix shard plus two Fiver suffix shards preserved MRR/query count.
+2026-06-17T18:32:22+00:00 - Added an improvement note that Bigwig shard activation should eventually open/start independent sanitized Hazel/Fiver shards concurrently while preserving deterministic Fluffle order.
+2026-06-17T18:51:09+00:00 - Recorded user-reported mixed suffix-Fiver consolidation check: `fluffy` queried a one-Hazel/two-Fiver Bigwig, the Fiver suffix merged to one Fiver while the Hazel prefix remained, and ranking preserved MARCO dev-small MRR/query count.
+2026-06-18T11:54:12+00:00 - Changed the default working-directory `Fiver::hazel(...)` overload to return an activated but unstarted Hazel shard on success while keeping the explicit-filename overload as a bool writer, and updated app/test call sites; verified compile-only builds.
+2026-06-18T13:20:27+00:00 - Changed the activated-source `Hazel::merge(hazels, dst, ...)` overload to return the activated but unstarted output Hazel while keeping the working/name adapter bool-returning for existing callers; verified compile-only builds.
+2026-06-18T13:26:31+00:00 - Added `Owsla::get_sequence(...)`, wired Fiver to its existing sequence fields, and cached Hazel sequence ranges at activation; verified compile-only builds.
+2026-06-18T17:34:23+00:00 - Removed the Hazel activation fallback that inferred sequence ranges from filenames; standalone Hazels may omit sequence metadata and then report `-1, -1` through `get_sequence(...)`.
+2026-06-18T17:49:58+00:00 - Updated `temp.md` merge-worker reorganization plan to keep only `find_merge_action(...)` as the new policy extraction and preserve a reviewable lock/classify/execute/publish worker flow.
+2026-06-18T17:52:14+00:00 - Clarified `temp.md` so merge_worker gains execution support for Fiver merge, Hazel merge, and boundary Fiver-to-Hazel conversion while current policy still recommends only existing Fiver/Fiver work.
+2026-06-18T17:59:09+00:00 - Reorganized `merge_worker`: extracted current Fiver-only recommendation into `find_merge_action(...)`, added inline action classification/execution support for Fiver merge, Hazel merge, and boundary Fiver-to-Hazel conversion, removed inactive old worker code, and verified compile-only builds.
+2026-06-19T13:20:59+00:00 - Restored `Working` ownership in `Fluffle` as the shared publication context for future Hazel merge execution, returned merge workers to the single-argument `merge_worker(fluffle)` shape, and verified compile-only builds.
+2026-06-20T12:07:50+00:00 - Added an inert `hazel_merge_okay(...)` policy gate hook inside Bigwig merge selection and verified `bazel build //src:cottontail`.
+2026-06-20T12:20:06+00:00 - Added the first Hazel-aware merge policy branch: `find_fiver_conversion(...)` recommends boundary Fiver-to-Hazel conversion before Fiver merge selection when Hazel merge work is allowed; verified `bazel build //src:cottontail`.
+2026-06-20T14:19:52+00:00 - Completed the initial Hazel-aware merge policy by adding a final smallest-adjacent-Hazel-pair recommendation branch to `find_merge_action(...)`; verified `bazel build //src:cottontail`.
+2026-06-20T14:39:29+00:00 - Temporarily disabled Hazel-aware merge policy by forcing `hazel_merge_okay(...)` to return false with the previous gate under `#if 0`; verified `bazel build //src:cottontail`.
+2026-06-20T16:02:30+00:00 - Added `temp.sh`, a diagnostic loop that repeatedly clears the main live shard names and runs only `apps/meadowlark --create --tsv` until failure.
+2026-06-20T17:25:16+00:00 - Extended `temp.sh` to run the `apps/forage` command after each successful create and stop on either create or forage failure.
+2026-06-20T18:15:19+00:00 - Added `ai/weird-crash.md` documenting the intermittent `meadowlark --create --tsv` transaction-ready failure, follow-up stress results, concrete source locations, and current hypotheses.
+2026-06-20T20:16:17+00:00 - Moved shard source cleanup to the common `Owsla::discard(...)` interface: Fiver and Hazel now both implement discard, `Fiver::hazel(...)` no longer accepts a discard parameter, and `merge_worker` discards selected sources only after successful Fluffle publication; verified compile-only builds.
+2026-06-20T22:56:31+00:00 - Fixed merge worker retirement so every worker exit decrements `fluffle->workers` while still holding the lock that observed no usable work or a terminal failure, avoiding a lost-worker race with `try_merge()`; verified compile-only builds.
+2026-06-20T23:53:49+00:00 - Refreshed the AI-facing Hazel/Bigwig checkpoint docs after the final policy/debugging pass, removed the standalone intermittent-crash note, and kept only durable follow-ups in `ai/plan.md`, `ai/notes.md`, and `ai/improvements.md`.
+2026-06-21T00:11:07Z - Consolidated Hazel documentation into `ai/hazel.md`, folded in the finished Bigwig/Hazel plan plus Hazel merge/progress notes, removed the obsolete Hazel side notes and completed plan, and refreshed AI doc pointers.
+2026-06-21T00:14:04Z - Restored `ai/plan.md` as the active minimal plan: talk with the user about query optimization.
+2026-06-21T16:16:42Z - Moved GCL query code from `src/` to top-level `gcl/`, added a GCL-side Warren helper behind `Warren::hopper_from_gcl`, kept GCL in the core `//src:cottontail` library, and verified `bazel build //src:cottontail`.
+2026-06-21T16:22:22Z - Minimized app fallout from the GCL move: `fluffy` now uses `Warren::hopper_from_gcl`, `mt` includes `gcl/mt.h`, and both app targets compile.
+2026-06-21T16:23:55Z - Updated direct GCL test includes after the source-tree split and verified compile-only builds for `//test:tests` and `//test:hazel_test`.
+2026-06-21T16:37:09Z - Reformatted root `AGENTS.md` as Markdown and added an audience note for AI coding assistants and other readers.
+2026-06-21T19:45:50Z - Added the initial static-only null GCL `Optimizer` scaffold, friended it to `SExpression`, wired `Optimizer::optimize(expr, warren)` into the post-phrase-expansion query pipeline, and verified compile-only builds.
+2026-06-21T22:17:31Z - Added exploratory `apps/gcl-rewrite` to print GCL S-expression expansion and optimization examples with a numeric mock Warren; verified `bazel build //apps:gcl-rewrite`.
+2026-06-21T22:22:50Z - Added no-rewrite examples to `apps/gcl-rewrite` for non-matching GCL optimizer shapes and verified `bazel build //apps:gcl-rewrite`.
+2026-06-21T22:30:23Z - Replaced exploratory `apps/gcl-rewrite` with dedicated `//test:optimizer_test`, kept optimizer tests out of the slow aggregate glob, and verified compile-only builds.
+2026-06-21T22:36:15Z - Added global `Optimizer::enable()`/`disable()` controls for performance comparisons and verified compile-only builds.
+2026-06-21T22:47:56Z - Added apps/gcl-timing.cc to compare GCL query timings with optimization enabled and disabled across fresh Warren activations.
+2026-06-21T22:51:18Z - Renamed the dedicated optimizer test from optimize to optimizer to match `gcl/optimizer.*`.
+2026-06-21T22:58:59Z - Expanded `apps/gcl-timing` to 32 built-in fixed-window GCL queries for optimizer timing comparisons.
+2026-06-21T23:04:02Z - Revised `apps/gcl-timing` queries to mix rare title terms with frequent function words for clearer optimizer comparisons.
+2026-06-22T00:32:59Z - Changed GCL optimization to default off while preserving explicit enable/disable controls and updated optimizer tests to opt in.
+2026-06-22T00:35:51Z - Added GCL optimization notes capturing the negative long-query timing result and the possible innermost materialization direction.
+2026-06-22T00:38:10Z - Updated `ai/plan.md` with the proposed `both_in` operator and materializing hopper optimization experiment.
+2026-06-22T00:39:29Z - Clarified the `both_in` plan: the optimizer should rewrite directly to the GCL operator expression `(both_in A B C)`.
+2026-06-22T00:45:05Z - Replaced the planned `both_in` optimization with a generic optimizer-generated `materialize` GCL operator.
+2026-06-22T12:33:34Z - Added the GCL `materialize` operator and hopper, and changed the contained-in/all-of optimizer rewrite to materialize each nested level.
+2026-06-22T12:35:37Z - Updated GCL optimizer notes and plan to describe the implemented `gcl/materialize.*` approach.
+2026-06-22T12:36:51Z - Refreshed `ai/plan.md` so the next step is evaluating the implemented materialized rewrite.
+2026-06-22T12:39:48Z - Updated active `apps/gcl-timing` queries from two-term probes to three-term probes by adding the likely highest-frequency omitted term while preserving window sizes.
+2026-06-22T13:30:18Z - Changed active `apps/gcl-timing` probes to six low-cooccurrence three-term queries with window `# 32`; verified `bazel build //apps:gcl-timing`.
+2026-06-22T14:13:47Z - Changed `apps/gcl-timing` to skip warmup and use `the` as the frequent term in all six active wide-window probes; verified `bazel build //apps:gcl-timing`.
+2026-06-22T16:10:54Z - Added `COTTONTAIL_SIMPLE_IDX_CACHE_EJECTION` and compiled out SimpleIdx large-posting eviction bookkeeping by default; verified `bazel build //src:cottontail //apps:gcl-timing`.
+2026-06-22T16:12:35Z - Added an improvement note to revisit SimpleIdx posting-cache policy and consider LRU-style replacement if bounded cache eviction is needed.
+2026-06-22T16:22:31Z - Added an improvement note for optimizer-generated GCL substitute bindings with reusable materialized `($ n)` references.
+2026-06-22T16:26:59Z - Restored the full title-style `apps/gcl-timing` query set headed by `winnie-pooh` and left warmup disabled; verified `bazel build //apps:gcl-timing`.
+2026-06-22T16:58:52Z - Added `ai/gcl-optimizer.md` as a checkpoint for the default-off GCL optimizer/materialize experiment and updated `ai/plan.md` to point future work there.
+2026-06-22T17:00:24Z - Clarified that `apps/gcl-timing.cc` is scratch and made optimizer tests use scoped optimization enablement; verified `bazel build //test:optimizer_test`.
+2026-06-22T21:07:51Z - Added `allowed_threads(...)` in `src/core.*` and changed `trec(...)` to use it before capping workers by query count; verified `bazel build //apps:rank`.
+2026-06-22T21:29:07Z - Added optional `start`/`end` address bounds to `ssr_ranking(...)`, limiting ranked containers by start address while preserving existing defaults; verified `bazel build //apps:rank` and `bazel build //test:tests`.
+2026-06-22T22:00:15Z - Added private `parallel_ranking(...)` range-splitting helper and public `parallel_ssr(...)` wrapper with top-level GCL/container hopper checks and per-thread Warren clones; verified `bazel build //apps:rank` and `bazel build //test:tests`.
+2026-06-22T22:13:36Z - Rewrote scratch `apps/gcl-timing.cc` to run `parallel_ssr(...)` for `(^ black bear attacks)` over `:` containers, report overall ranking time, and print top snippets; verified `bazel build //apps:gcl-timing`.
+2026-06-22T22:22:33Z - Updated scratch `apps/gcl-timing.cc` to run both `(^ black bear attacks)` and `(^ black bear attack)`, printing per-query stdout/stderr headers and per-query ranking timing; verified `bazel build //apps:gcl-timing`.
+2026-06-22T22:27:01Z - Expanded scratch `apps/gcl-timing.cc` with a hot rerun of `(^ black bear attacks)` plus twelve prevention-oriented bear-attack queries; verified `bazel build //apps:gcl-timing`.
+2026-06-22T22:40:00Z - Updated `ai/plan.md` for the next Meadowlark-focused discussion/planning step with no coding until user approval.
+2026-06-23T19:43:25Z - Changed SSR ranking results to retain the shortest matching extent as `p/q` while preserving the ranked container, and updated scratch `apps/gcl-timing.cc` to print clipped evidence windows; verified `bazel build //apps:rank`, `bazel build //apps:gcl-timing`, and `bazel build //test:tests`.
+2026-06-23T20:03:56Z - Made scratch `apps/gcl-timing.cc` interactive with readline, taking raw boolean/GCL queries and printing ten 200-token passage windows; verified `bazel build //apps:gcl-timing`.
+2026-06-23T20:11:54Z - Changed scratch `apps/gcl-timing.cc` into a cached passage prompt: non-empty input runs a 20-result query, return prints the next 200-token passage, and only timing is reported on stderr; verified `bazel build //apps:gcl-timing`.
+2026-06-23T20:45:08Z - Updated scratch `apps/gcl-timing.cc` passages to wrap the main SSR cover in `<b>...</b>` by translating the before/cover/after address ranges; verified `bazel build //apps:gcl-timing`.
+2026-06-24T16:25:14Z - Added `maybe_zipped(...)` in `src/builder.*` to open plain or zcat-backed input streams, and refactored `inhale(...)` to read through it; verified `bazel build //apps:meadowlark`.
+2026-06-24T16:28:29Z - Wired `maybe_zipped(...)` into `meadowlark::append_jsonl(...)` so JSONL ingestion can stream plain or compressed files through the same path; verified `bazel build //apps:meadowlark`.
+2026-06-24T16:53:49Z - Updated `apps/meadowlark` argument parsing so input type flags apply to multiple following files, added `--json` as an alias for `--jsonl`, and corrected usage text; verified `bazel build //apps:meadowlark`.
+2026-06-24T20:51:53Z - Added locked Bigwig merge-worker diagnostics reporting live Fiver `estimated_size()` totals in MB after merge replacement; verified `bazel build //apps:meadowlark`.
+2026-06-24T21:26:08Z - Fixed `Fiver::unpickle(...)` storage estimation so posting counts are not multiplied by `sizeof(Annotation)` twice; verified `bazel build //apps:meadowlark`.
+2026-06-25T01:01:27Z - Changed Bigwig merge policy so Fiver-to-Hazel conversion is not gated by Hazel merge policy, checks boundary-pair repair before building general Fiver merge vectors, keeps the `medium_shard` small-Fiver run priority, merges a below-`large_shard` boundary Fiver with an immediate above-`large_shard` Fiver neighbor, uses capped oldest eligible Fiver pairs otherwise, names the `large_shard` conversion threshold, and removes the temporary Fiver-size diagnostic; verified `bazel build //apps:meadowlark`.
+2026-06-25T16:45:50Z - Updated Bigwig shard sanitization to allow mixed Hazel/Fiver order, remove Fivers covered by Hazels, reject cross-kind partial overlaps and Fivers containing Hazels, and activate sanitized shards in sequence order; verified `bazel build //apps:meadowlark`.
+2026-06-25T19:34:17Z - Reworked Bigwig merge selection around a barrier policy: merge tiny young Fiver runs, convert old-side Fivers, merge young-side Fiver pairs, continue recovered Hazel merges before smallest-pair Hazel merges, and let merge-worker validation clear conflicting Hazel recoveries; verified `bazel build //apps:meadowlark`.
+2026-06-26T18:25:52Z - Preserved container ranges when `tiered_ranking(...)` forwards SSR results and updated ranking tests to inspect SSR containers explicitly; verified `bazel build //test:tests`.
+2026-06-26T18:59:53Z - Updated AI planning and notes for the next Meadowlark work queue, current Bigwig mixed-shard/barrier policy, SSR passage/container semantics, and the current scratch `apps/gcl-timing` shape.
+2026-06-27T12:22:49Z - Propagated `ready(error)` through the `Committable` virtual hook and the Bigwig/Fiver/Scribe/Forager ready paths so failures report from the component that detects them; verified compile-only builds.
+2026-06-27T15:29:29Z - Added restart detection and verbose skip/append status for `meadowlark::append_jsonl(...)`; verified `bazel build //apps:meadowlark`.
+2026-06-27T19:25:54Z - Added Scribe-level coordinated commit routing for Warren-backed scribes and kept `append_jsonl(...)` on the Scribe transaction/finalize lifecycle; verified `bazel build //src:cottontail //apps:meadowlark` and `bazel build //apps:jsonl //apps:wikidata-build`.
+2026-06-27T19:34:34Z - Added `ai/meadowlark.md` with the planned common Meadowlark append lifecycle, future JSONL/TSV/text/code ingestion surfaces, and inconsistencies left after today's JSONL-focused changes.
+2026-06-27T19:44:54Z - Added a Codex-labeled README section summarizing why annotative indexing may be useful for agents that can generate precise structural queries over code and text.
+2026-06-28T11:40:35Z - Refreshed `ai/plan.md` to mark completed Meadowlark JSONL restart/commit work and focus the next discussion on source marker durability, helper extraction, and tests.
+2026-06-28T11:43:42Z - Updated `ai/plan.md` with the intended JSONL source marker fix: do not commit `append_path(...)` early; commit the main Warren with worker clones at the bottom and abort all transactions on failure.
+2026-06-28T11:57:11Z - Refined `ai/plan.md` with the intermediate append path refactor: one Appender/Annotator marker writer plus Scribe and Warren wrappers that ready but do not commit, with TSV preserving current behavior via an explicit post-marker commit.
+2026-06-28T12:00:50Z - Clarified `ai/plan.md` that the current focus is `append_jsonl(...)`: wrap the main Warren as a Scribe only for source-marker writing, then commit that Scribe with the worker clone Scribes through `Scribe::commit_all(...)`.
+2026-06-28T12:09:03Z - Updated `ai/plan.md` to include the planned CLI-level JSONL restart check: collect JSONL files in `apps/meadowlark.cc`, check them once with a public vector `already_appended(...)`, and append only missing files.
+2026-06-28T12:11:33Z - Refined the `apps/meadowlark.cc` restart plan to parse all input files into typed records, preflight their source identities in one started-Warren pass, flag already-appended records, and then dispatch only missing appends.
+2026-06-28T12:19:58Z - Implemented the Meadowlark append preflight and marker transaction changes: exposed scalar `already_appended(...)`, parsed `apps/meadowlark` inputs into typed records checked in one started-Warren pass, split path marker writing into shared Appender/Annotator plus Scribe/Warren wrappers, and committed the JSONL marker Scribe with worker Scribes; verified `bazel build //apps:meadowlark` and `bazel build //src:cottontail`.
+2026-06-28T12:27:38Z - Changed the shared Meadowlark path marker helper to take a `Featurizer` and own the `"/"` marker feature lookup instead of exposing the marker feature to callers; verified `bazel build //apps:meadowlark` and `bazel build //src:cottontail`.
+2026-06-28T12:34:18Z - Moved source path normalization and returned source-feature calculation into the shared `append_path(...)` helper so Scribe/Warren wrappers only manage transaction/ready behavior; verified `bazel build //apps:meadowlark` and `bazel build //src:cottontail`.
+2026-06-28T12:41:43Z - Renamed the JSONL main Warren wrapper to `path_scribe` and appended it to the Scribe vector after worker setup so final abort/finalize/commit paths use the same collection; verified `bazel build //apps:meadowlark` and `bazel build //src:cottontail`.
+2026-06-28T12:45:12Z - Made the Meadowlark path append helpers private to `meadowlark.cc`, leaving only `already_appended(...)` and the public append APIs in `meadowlark.h`; verified `bazel build //apps:meadowlark` and `bazel build //src:cottontail`.
+2026-06-28T13:01:02Z - Refreshed `ai/plan.md`, `ai/meadowlark.md`, and `ai/notes.md` so the completed Meadowlark JSONL append/preflight work is recorded as current state rather than pending work.
+2026-06-28T13:03:26Z - Updated `ai/plan.md` with the preferred next Bigwig merge-selector cleanup: express `find_merge_action(...)` around a single split point instead of separate barrier-derived older/younger variables.
+2026-06-28T14:44:49Z - Added Bigwig lone-Fiver cleanup before the barrier policy, doubled `small_shard` and `medium_shard`, introduced `large_shard = 2 * medium_shard`, and updated merge-policy notes; verified `bazel build //src:cottontail` and `bazel build //apps:meadowlark`.
+2026-06-28T14:49:37Z - Replaced Bigwig `find_barrier(...)` with `find_split(...)` and simplified `find_merge_action(...)` to use the single split point for older and younger half-open ranges; verified `bazel build //src:cottontail` and `bazel build //apps:meadowlark`.
+2026-06-28T22:22:42Z - Added `apps/merge-hazels`, a thin explicit Hazel-file merge CLI that activates the listed inputs and delegates validation/merge work to `Hazel::merge(...)`; verified `bazel build //apps:merge-hazels`.
+2026-06-28T22:29:27Z - Changed `apps/merge-hazels` to take a meadow plus explicit input Hazels and infer the output Hazel path from the first and last input sequence ranges; verified `bazel build //apps:merge-hazels`.
+2026-06-28T22:35:21Z - Removed meadow `Working` lookup from `apps/merge-hazels`; it now takes only standalone Hazel inputs, activates them directly, and writes the inferred output beside the first input Hazel; verified `bazel build //apps:merge-hazels`.
+2026-06-28T22:37:00Z - Added an explicit complete-sequence check to `apps/merge-hazels` after activating inputs and before invoking `Hazel::merge(...)`; verified `bazel build //apps:merge-hazels`.
+2026-06-28T22:56:25Z - Renamed the interactive SSR client from `apps/gcl-timing.cc` to `apps/ssr-client.cc`, updated its diagnostics to use `program_name`, wired `//apps:ssr-client`, and refreshed AI notes; verified `bazel build //apps:ssr-client`.
+2026-06-29T21:31:20Z - Reworked Bigwig merge selection to remove the split/barrier policy, group Fiver cleanup/conversion under `find_fiver_action(...)`, keep Hazel work as the fallback policy, and allow adjacent Fiver-pair merges when each side is below `medium_shard`; verified `bazel build //src:cottontail` and `bazel build //apps:trec-example`.
+2026-06-29T21:31:20Z - Refreshed `ai/plan.md`, `ai/notes.md`, and `ai/hazel.md` so current Bigwig merge-policy notes match the no-split implementation.
+2026-06-29T23:12:25Z - Updated `apps/ssr-server` snippets to stay within the ranked content interval, use the outer container only for docno lookup, clip oversized covers to the first window, emit `<cover>` highlighting, and verified `bazel build //apps:ssr-server`.
+2026-06-29T23:19:00Z - Expanded `apps/ssr-server` retained SSR result depth from 20 to 1000 covers and verified `bazel build //apps:ssr-server`.
+2026-06-29T23:46:01Z - Added `apps/ssr-client.py` as a standard-library Python JSON-line SSR client example, unignored it explicitly, and verified `python3 -m py_compile apps/ssr-client.py`.
+2026-06-29T23:47:27Z - Removed the explicit port argument from `apps/ssr-server`; it now binds an automatic localhost port, reports only the port number, and verified `bazel build //apps:ssr-server`.
+2026-06-30T13:55:47Z - Normalized `apps/ssr-server` emitted docnos, changed qids to zero-based `qN` strings, cached emitted docnos to ranked content intervals for `document` requests, removed the document-path docno scan, and verified `bazel build //apps:ssr-server`.
+2026-06-30T19:37:25Z - Refreshed `ai/notes.md` to document current SSR server/client protocol behavior, content-bounded snippets, qid/docno handling, and document-cache semantics for the pending commit.
+2026-07-01T14:15:24Z - Added an `ai/improvements.md` note to untangle ranking terminology around rankable content intervals, outer containers, and docno/id intervals.
+2026-07-01T15:12:17Z - Made `apps/ssr-server` full-document lookup stateless across collections with optional comma-separated `--fields` assembly, added `@next`/`@full` commands to both SSR clients with typed commands retained in history, refreshed notes, and verified `bazel build //apps:ssr-server //apps:ssr-client`, `bazel build //apps:ssr-client`, and `python3 -m py_compile apps/ssr-client.py`.
+2026-07-01T15:16:27Z - Updated `apps/ssr-server` `--fields` document assembly to strip outer quotes from translated field pieces and join pieces with ` ... `; verified `bazel build //apps:ssr-server`.
+2026-07-04T14:27:19Z - Added `apps/ssr-timing`, a batch SSR timing client that logs `qid time` lines from server-reported timings and stops after a returned query exceeds 30 seconds; verified `bazel build //apps:ssr-timing`.
+2026-07-04T14:40:36Z - Broadened `Hopper` accessor memoization from exact-key reuse to semantic interval reuse for `tau`, `rho`, `uat`, and `ohr`; verified `bazel build //src:cottontail`.
+2026-07-04T14:46:47Z - Added an optional seconds argument to `apps/ssr-timing` for overriding the slow-query stop threshold; verified `bazel build //apps:ssr-timing`.
+2026-07-04T16:07:38Z - Added an SSR `set_optimizer` protocol command for toggling the opt-in GCL optimizer inside a running server; verified `bazel build //apps:ssr-server`.
+2026-07-04T16:15:17Z - Changed `apps/ssr-timing` to run each query as `c/opt`, `w/not`, then `w/opt`, flushing every timing record and reporting docno mismatches only on stderr; verified `bazel build //apps:ssr-timing`.
+2026-07-04T16:53:22Z - Narrowed the GCL containment materialization optimizer to `+` parents and made `Materialize` adaptively sample calls 1, 2, 4, 8, etc., materializing only after a sampled call exceeds 4 ms; verified `bazel build //src:cottontail`.
+2026-07-04T16:58:19Z - Corrected the GCL materialization optimizer to pass `+` materialization context downward and return materializable-subtree flags upward, so phrases or containment inside `+` branches are wrapped and then treated atomically for further optimization; verified `bazel build //src:cottontail`.
+2026-07-04T19:38:32Z - Replaced timing-triggered full `Materialize` behavior with sparse interval memoization maps for `tau`, `rho`, `uat`, and `ohr`; verified `bazel build //src:cottontail`.
+2026-07-04T19:42:41Z - Tightened the GCL materialization optimizer's trigger set to the four containment operators (`<<`, `>>`, `!<`, and `!>`), leaving phrase-internal `...` to be covered by the surrounding `>>`; verified `bazel build //src:cottontail`.
+2026-07-04T19:53:10Z - Restored full `Materialize` enumeration as the active implementation and kept the sparse lazy memoization implementation behind disabled `COTTONTAIL_GCL_MATERIALIZE_LAZY` preprocessor branches; verified `bazel build //src:cottontail`.
+2026-07-04T21:36:34Z - Turned the GCL optimizer on by default while preserving `Optimizer::disable()` for explicit timing/protocol comparisons; verified `bazel build //src:cottontail`.
+2026-07-04T21:49:29Z - Documented the `SExpression`/`Optimizer` friend-access boundary in both headers and moved the enum-only materialization predicate out of the optimizer class; verified `bazel build //src:cottontail`.
+2026-07-04T21:58:13Z - Moved the S-expression node factory from the optimizer helper set to `SExpression::make(...)`, leaving optimizer private helpers only for direct tree-rewrite access; verified `bazel build //src:cottontail`.
+2026-07-04T22:05:04Z - Changed active full `Materialize` enumeration to build vector-backed `SimplePosting` storage directly after the second result, preserving empty/singleton fast paths and avoiding the extra shared-array copy; verified `bazel build //src:cottontail`.
+2026-07-04T22:44:19Z - Updated optimizer tests for `+`-driven containment materialization and added hopper/materialize tests for widened accessor memoization and SimplePosting-backed materialization semantics; user verified `make testing`.
+2026-07-04T23:01:35Z - Refreshed AI notes for push: documented the current default-on GCL materialization optimizer, SSR timing client behavior, hopper memoization semantics, SimplePosting-backed materialization, full regression pass, and inspected MARCO dev-small ranking results for `a.meadow/` and `b.meadow/`.
+2026-07-11T13:50:48+00:00 - Added `apps/finish-merging`, which opens directory burrows to drive background Bigwig consolidation and waits until each contains one Fiver/Hazel shard; verified `bazel build //apps:finish-merging`.
+2026-07-11T14:22:27+00:00 - Refreshed optimizer, repository, and planning notes for the default-on containment materialization rule, interval Hopper memoization, sampled SSR performance conclusions, current Bigwig Fiver policy, and `apps/finish-merging`.
+2026-07-11T14:31:26+00:00 - Moved the completed lazy-materialization experiment out of improvements and into the GCL optimizer checkpoint, including sparse cache semantics, measured outcome, and the `COTTONTAIL_GCL_MATERIALIZE_LAZY=1` build switch.
+2026-07-11T14:32:24+00:00 - Moved speculative staged GCL substitution bindings from general improvements into the optimizer checkpoint alongside the phrase-posting follow-up direction.
+2026-07-11T14:56:31+00:00 - Added a cached phrase-posting improvement sketch covering the token-separator invariant, default `Warren` fallback, cache-aware phrase hook, asynchronous `SimplePosting` fill, shared waitable entries, and snapshot-scoped invalidation.
+2026-07-11T15:21:34+00:00 - Added a lower-priority parallel multi-burrow activation improvement tying SSR startup concurrency to atomic open-burrow reuse and Bigwig population-based merge-worker budgeting.
+2026-07-11T15:52:51+00:00 - Added `ai/static-shards.md` with the deferred restartable static-shard builder design and linked it from improvements, explicitly making completion of Meadowlark `append_*` lifecycles a prerequisite.
+2026-07-11T15:57:43+00:00 - Simplified the static-shards restart design to replay the published plan from the beginning and required `README.md` to show the exact human restart command.
+2026-07-11T16:13:08+00:00 - Added an SSR improvement note to choose per-shard retrieval depth with the Section 4 top-m probability model, including confidence selection, exact fallback, and distribution assumptions.
+2026-07-11T16:15:16+00:00 - Moved the top-m depth idea lower in improvements and broadened it into a future renamed parallel ranking server supporting SSR, BM25, and other ranking methods, with the Clarke-Terra model linked for per-shard depth selection.
+2026-07-11T16:17:03+00:00 - Replaced the completed-work-heavy active plan with three explicitly gated next phases: finish Meadowlark `append_*` lifecycles, cache phrase postings, and build restartable static shards.
+2026-07-11T16:41:59+00:00 - Made `ssr-server` apply `json_translate(...)` at its display boundary for snippets, field pieces, and full documents, and recorded the deferred cleanup separating faithful `Txt::translate(...)` output from presentation rendering.
+2026-07-12T16:36:23+00:00 - Extended stranded Fiver conversion to handle an oldest Fiver followed by a Hazel, resolving the left-boundary merge fixed point without converting the active transaction tail.
+2026-07-20T01:41:29+00:00 - Refreshed `ai/meadowlark.md` with current append behavior, the coordinated TSV direction, punctuation discovery conventions, extensible `@` JSON metadata types, missing-type forager compatibility, and planned TSV header mappings.
+2026-07-20T01:43:28+00:00 - Clarified the Meadowlark file-metadata convention: JSON carries a normalized `file` member and its `@` interval is structurally contained by an annotation for that same file identity.
+2026-07-20T02:14:47+00:00 - Moved forager metadata JSON serialization and parsing from `forager.*` into new `metadata.*` files using the existing nlohmann parser, updated direct consumers, and compile-checked `//src:cottontail` and `//test:tests` without running tests.
+2026-07-20T02:19:36+00:00 - Made new forager metadata emit `"type":"forager"`, kept missing-type parsing compatible with older databases, rejected other explicit metadata types, added focused test cases, and compile-checked the library and test binary without running tests.
+2026-07-20T23:51:32+00:00 - Documented JSON file metadata as `{"type":"json","file":"<normalized-source>"}`, structurally contained by the matching file annotation and committed atomically with the source marker and JSON records.
+2026-07-20T23:57:03+00:00 - Implemented JSON file metadata creation and append: `append_jsonl(...)` now writes the normalized `type=json` record into the source Scribe transaction with `@` and file annotations; added focused serialization and append coverage and compile-checked the library and test binary without running tests.
+2026-07-21T00:23:10+00:00 - User regression testing exposed that raw-appended metadata lost leading JSON structure on interval translation; added transaction-neutral, annotation-free `json_append(...)` in `src/json.*`, shared its encoded writer with `json_scribe(...)`, moved JSON and forager metadata onto it, and compile-checked the library and test binary without running tests.
+2026-07-21T02:35:47+00:00 - Reworked JSON writing around a shared templated traversal for Scribes and Warrens; moved JSONL workers off Scribes; gave data and metadata distinct `:` and `@` roots with colon-path fields; restricted filename annotations to data; canonicalized new forager defaults; and added structured Stats lookup with legacy empty-tag fallback. Compile-only verification was used.
+2026-07-21T07:46:50+00:00 - Moved TSV ingestion onto the coordinated direct-Warren append lifecycle; added typed TSV metadata and header-derived whitespace-free column features; retained numeric no-header columns; renamed new forager `gcl` metadata to `contents` with legacy and container fallbacks; made IDs optional outside ID-producing consumers; and added focused compile-only coverage.
+2026-07-21T19:50:18+00:00 - Reworked `append_tsv(...)` to stream records through the same synchronized-reader and direct-Warren worker pattern as JSONL, buffering only the first record for its column mapping and assigning numeric features to wider rows lazily; compile-checked the library, tests, and affected apps without running tests.
+2026-07-21T22:19:54+00:00 - Refreshed AI documentation around Meadowlark's self-describing format: documented `/` and `@` agent bootstrap, explicit metadata types, the distinct source-marker/file-field/data-feature roles, current TSV and forager records, legacy lookup behavior, metadata evolution questions, completed JSONL/TSV static-builder prerequisites, and the user-reported fresh-index ranking check.
+2026-07-21T22:45:45+00:00 - Recorded the user's backward-compatibility verification that older `b.meadow` and `c.meadow` indexes with pre-current metadata field names remain usable with the current reader.
+2026-07-22T00:45:41+00:00 - Added transaction-local Meadowlark source provenance: canonical source names carry `/` and `//`, each nonempty JSONL/TSV worker carries a `//` source name, and `/.` wraps each name with its metadata or data; added focused compile-only coverage and documented the query convention.
+2026-07-22T02:01:08+00:00 - Added single-transaction text and code file ingestion with typed metadata, two source-provenance segments, one `:` object per file, and one-based physical-line values under bare `#`; moved typed input planning into `src/append.*`, added mixed parallel text/code scheduling across JSONL/TSV entries, wired the Meadowlark CLI, and added focused compile-only coverage and documentation.
+2026-07-22T03:25:27+00:00 - Consolidated completed Meadowlark work into a durable database-conventions reference, added a standalone model-facing exploration guide beginning with `@`, removed completed ingestion work from the active plan, and reduced duplicate implementation detail in the general notes.
+2026-07-22T03:34:54+00:00 - Moved the reusable typed append plan into the public `cottontail::meadowlark::append(...)` API declared by `meadowlark/meadowlark.h`, made the Meadowlark app a thin caller of that operation, removed the accidental `src/append.*` surface, and compile-checked the library, app, and test binary without running tests.
+2026-07-22T03:40:19+00:00 - Renamed the public batch ingestion operation from `meadowlark::append(...)` to `meadowlark::append_all(...)` to distinguish its complete typed-file-plan semantics from single-source append operations; updated the app, tests, and current documentation and repeated compile-only verification.
+2026-07-22T04:05:23Z - Inspected `build.sh` and the background Bigwig consolidation path, then recorded the user-reported 1-minute ingestion, 2-minute foraging, and nearly 30-minute finish-merging benchmark together with a planning-only Hazel unique-source fast-path candidate and its historical 2.75% result; made no code changes or runtime runs.
+2026-07-23T00:45:42Z - Replaced the cached Fluffle merge flag with lock-held `merge`/`convert` parameter policy, added Fiver-only unbounded pair consolidation and `Bigwig::merge(on, convert)`, accepted checked create-time parameters in the Meadowlark app, added focused API coverage, and compile-checked the library, Meadowlark/forage/finish-merging apps, and aggregate test binary without running tests.
+2026-07-23T01:47:08Z - Recorded the user-run `convert:no` build benchmark: ingestion 1:02.82, forage 3:29.02, and finish-merging 38:20.55. The result was one 3,634,617,502-byte Fiver with approximately 20.2 GB of reported filesystem output (about 5.6 times final size), pointing to pairwise merge rewrite amplification rather than a Hazel-specific bottleneck; made no source changes or additional runs.
+2026-07-23T01:52:53Z - Compared Bigwig/Fiver consolidation with the simple-Warren build and annotation merge paths. Refined the plan to treat reported output as a repeated-work proxy rather than proof of an I/O bottleneck, and recorded the stronger CPU-side candidates: binary whole-shard reconstruction, per-entry posting merging, repeated zlib compression, and the narrowing parallel merge tail; made no source changes or runtime runs.
+2026-07-23T03:27:30Z - Temporarily added and compile-checked stderr timestamps around Fiver-to-Hazel serialization. The user's `fluffy` run measured 538,187 ms for the index phase and 219,992 ms for the text phase (758,179 ms total), after which the user restored `src/fiver.cc`; no timing instrumentation remains in the source.
+2026-07-23T04:19:08Z - Added temporary per-merge stderr timing around `Fiver::pickle`, reporting the merged shard's estimated byte size, input-shard count, and elapsed milliseconds; compile-checked `//apps:finish-merging` and `//apps:fluffy` without running them.
+2026-07-24T02:32:08Z - Added offline `Bigwig::consolidate(...)` with shared Bigwig burrow setup, idempotent Hazel recovery discard, wide Fiver-run merging without intermediate pickling, direct final Hazel merging, and internal opt-in phase timings; changed `finish-merging` to invoke it with a `--verbose` option; added focused consolidation/recovery coverage and compile-checked the library, app, and test targets without running tests.
+2026-07-24T02:38:32Z - Corrected two expectations exposed by the user's regression run: the Hamlet consolidation fixture contains five `sleep` postings, and the mixed consolidation fixture must use the normal 64 KiB Hazel text chunk size so its old and newly converted Hazels have compatible DNA; compile-checked both affected test targets without rerunning them.
+2026-07-24T04:00:52Z - Recorded the user's first large foreground-consolidation benchmark: 21:11.05 elapsed at 99% CPU, including 31.871 s to load 29 Fivers, 59.545 s for one wide Fiver merge, 505.442 s for Fiver-to-Hazel conversion, and 665.872 s to merge six Hazels. The run used normal background conversion and began with five completed Hazels plus two partial Hazel merges; no code was changed.
+2026-07-24T04:12:10Z - Traced the common index path through `SimplePosting`: Fiver-to-Hazel and Hazel/Hazel output both use per-list `SimplePosting::write`, while Hazel merge also decodes and reconstructs lists through `SimplePostingFactory`. Identified fresh best-compression zlib setup plus a 64 KiB extra allocation for every value-bearing list as the leading shared hypothesis, with per-feature Hazel checkpoint flushes as a separate Hazel-only candidate; made no source changes.
+2026-07-24T05:31:21Z - Reworked `ZlibCompressor` to reuse thread-local deflate/inflate contexts via `deflateReset(...)` and `inflateReset(...)`, and replaced the fixed 64 KiB output allowance with `compressBound(...)`. Added byte-for-byte fresh-zlib compatibility coverage and shared-compressor concurrency coverage; compile-checked the library, aggregate tests, and the Meadowlark, forage, and finish-merging binaries without running tests.
+2026-07-24T05:56:29Z - Planned a bounded `SimplePosting` cleanup: first add a point/interval by absent/present-value merge matrix, then bulk-append ordered lists, decode directly into sized vectors, and reuse thread-local write buffers; after measuring that work, separately reuse Hazel merge-loop vectors and sequential directory positions. Explicitly deferred format, singleton, general merge, exclusion, and checkpoint-policy changes; made no source changes.
+2026-07-24T06:18:39Z - Recorded the user's zlib-reuse benchmark: foreground consolidation improved from 1,269,902 ms to 1,259,340 ms (0.83%), with Fiver conversion down 0.76% and Hazel merging down 0.65%; ingestion and foraging were effectively unchanged. Agreed to retain the format-compatible cleanup while treating the result as small and possibly within run variation; no source code was changed.
+2026-07-24T06:34:48Z - Combined the planned `SimplePosting` cleanup with the safe Hazel merge-loop cleanup because verbose phase timings preserve attribution. The Hazel work is limited to reusing the per-feature source vector and consuming already-sequential directory positions; special-feature lookup, checkpoint flushing, and broad checkpoint reservation remain unchanged. No source code was changed.
+2026-07-24T06:44:05Z - Implemented the bounded posting cleanup: added the 32-case compact/expanded representation merge matrix; bulk-appended ordered postings; decoded compressed postings directly into sized vectors; reused thread-local write buffers; and changed regular Hazel merge features to reuse one source vector and consume sequential directory positions. Compile-checked the library, aggregate and Hazel test binaries, build applications, and standalone Fiver/Hazel conversion and merge applications without running runtime tests or benchmarks.
+2026-07-24T08:03:31Z - Recorded the user's combined posting-cleanup benchmark: foreground consolidation improved from 1,259,340 ms to 1,231,490 ms (2.21%). Fiver loading improved 19.30% and Hazel merging 3.30%, while the wide Fiver merge and Fiver-to-Hazel conversion were unchanged; peak resident memory was 5.49% lower. No source code was changed.
+2026-07-24T22:52:15Z - Recorded the architectural convention that major Cottontail objects, including compressors, are intended for concurrent use unless documented otherwise; hoppers are stateful cursor exceptions and must remain thread-local. No source code was changed.
+2026-07-25T04:51:14Z - Replaced the stale active plan with the agreed restartable parallel Hazel-merge design: one canonical posting-log procedure, single-threaded for two-Hazel background merges and maximally threaded for many-Hazel consolidation, fixed recovery segment width, compressed-record final assembly, and cleanup of the legacy checkpoint format. No source code was changed.
+2026-07-25T05:00:29Z - Audited the AI documentation against the current tree: updated Meadowlark create-time parameters, foreground consolidation, live merge/convert policy, posting/compressor cleanup, and the deferred static-shard workflow; moved old Hazel fast-path/disk ideas behind the new posting-log plan. Preserved the authoritative architecture, model exploration guide, optimizer checkpoint, and current Hazel implementation description unchanged; no source code was changed.
+2026-07-25T06:12:09+00:00 - Added `ai/comments.md` with design feedback and user-confirmed clarifications for the restartable parallel Hazel merge, including serial special-feature preparation, thread policy, routine cross-activation recovery, frozen segments, the append-only-prefix filesystem model, and deliberately deferred I/O/format work; no source code or active plan was changed.
+2026-07-26T05:10:30Z - Recorded the completed restartable parallel Hazel merge and consolidation pipeline: canonical `merge.*` posting logs, serial special-feature preparation, tail-truncation recovery, compressed-record final assembly, coherent recovery reconciliation, legacy cleanup, aborted-commit gaps, conflicting-recovery removal, greedy parallel Fiver merge/conversion, and publication-ordered source cleanup. The user reports that `make testing`, interrupted background merging, and repeated MS MARCO ranking checks pass.
+2026-07-26T05:10:31Z - Recorded the user's 317,915 ms MS MARCO consolidation result (29 parallel Fiver groups and 37-Hazel final merge), documented stable per-index ranking with cross-build tie/order churn, and refreshed the plan, Hazel reference, repository notes, design record, and deferred improvements for the commit checkpoint; no source code was changed during this documentation pass.
+2026-08-01T20:50:28+00:00 - Tightened background merge publication by removing null Fluffle entries, validating the reserved source range before mutation with debug assertion and production cleanup, and releasing the merged-posting cache when consolidation reaches one Owsla; compile-only verification was used.
+2026-08-02T00:00:32+00:00 - Recorded the user's successful post-change verification with `apps/trec-example`, the regression tests, and `./rank.sh a.meadow`; no source code was changed.
+2026-08-03T19:16:29+00:00 - Added the deferred Warren memory-trimming design checkpoint and refreshed plan, repository, Hazel, and improvement notes: external services own pressure policy, a future `trim_memory()` should aggressively release reconstructible state, Bigwig must cover current and historical snapshots, posting caches can clear in place, and Hazel text eviction remains deliberately unresolved; no source code was changed.
+2026-08-03T19:34:59+00:00 - Rechecked the completed foreground-consolidation implementation, `finish-merging` wiring, focused coverage, and recorded large/user verification, then made `ai/plan.md` explicit that consolidation is finished, server memory work is deferred, and no next direction has been selected; no source code was changed.
+2026-08-03T19:38:13+00:00 - Moved the completed consolidation, recovery, benchmark, and verification history from `ai/plan.md` into `ai/consolidation.md`, reduced the current plan to its working rule, checkpoint, and unknown next direction, and updated current documentation cross-references; no source code was changed.
+2026-08-03T19:40:00+00:00 - With explicit user authorization, added an architectural note that `ai/` is a grep-friendly archive of design and checkpoint records for completed changes rather than requiring completed designs to remain in the current plan; no source code was changed.
+2026-08-05T15:09:59+00:00 - Added public `Warren::trim_memory()` with a default no-op, implemented Hazel trimming by clearing its shared decoded-posting `OwslaCache` under the cache lock, added focused clone/refill/active-hopper coverage, and updated the memory design checkpoint; compile-checked `//src:cottontail` and `//test:hazel_test` without running tests.
+2026-08-05T15:32:02+00:00 - Added Warren-generic string and parsed-expression `Optimizer::estimate_memory(...)` overloads that expand phrases, deduplicate term features, and estimate decoded posting payload from index counts, returning zero for parse failure or null inputs; added synthetic traversal coverage and real Simple-index checks, then compile-checked `//src:cottontail`, `//test:optimizer_test`, and `//test:tests` without running tests.
+2026-08-05T15:53:48+00:00 - Added Linux-only, fail-open SSR query admission checks: trim every persistent collection Warren when `MemAvailable` is below one third of `MemTotal`, reject queries whose summed Warren estimate exceeds one eighth of physical RAM, and report rejection through the normal JSON query error; compile-checked `//apps:ssr-server` without running the server.
+2026-08-06T14:59:17Z - Refreshed the Hazel, optimizer, memory, and current-plan checkpoints for the combined ClimbMix/TREC RAG 2026 server work; recorded the 512-token SSR snippet cap and the user's report that the changes have been tested in various ways and are ready to commit; no source code was changed.
+2026-08-09T17:57:39+00:00 - Added the preliminary staged workplan for indexed regular-expression matching, covering the HashingFeaturizer boundary, universal feature `-1`, literal GCL features, contextual byte grams, phrase compilation, regexp semantics, and related work; no source code was changed.
+2026-08-10T15:49:24Z - Made the shared filesystem walker include all regular files, expanded each Meadowlark typed input path recursively before `append_all(...)`, renamed the foreground consolidation app to `consolidate` with a Bazel-generated `finish-merging` compatibility symlink, and corrected a consumer's transitive `<regex>` dependency; the full debug `//...` build succeeded without running tests.
+2026-08-10T16:06:33Z - Recorded that current `e.meadow` is the preserved 2026-07-26 parallel-build `a.meadow` and reproduced its MRR@10 exactly at `0.18948731068358557`, while an independent current `a.meadow` reached `0.1898843634875152`; this stable-per-index, bidirectional between-build movement confirms normal tie/order churn rather than a permanent quality drop.
+2026-08-10T16:15:39Z - Added `inspect` as a Bazel-generated symlink to the existing `fluffy` interactive GCL inspection command; no source behavior changed.
+2026-08-10T16:24:43Z - Replaced the shared application walker's Boost.Filesystem use with C++17 `std::filesystem` and removed all hardcoded `/usr/local` Boost include/link flags from its consumers; the full debug `//...` build succeeded without running tests.
+2026-08-10T16:29:39Z - Deferred the unrequested `Working` shell-operation cleanup and focused filesystem/walker regression coverage in `ai/improvements.md`, noting that existing tests cover ordinary creation and listing while path, cleanup, and walker edge cases should be added only when that behavior is next changed; no code or tests changed.
+2026-08-10T16:46:52Z - Replaced GNU Readline in `fluffy`, `mt`, and `ssr-client` with the BSD-licensed BCR Linenoise 2.0.0 module, kept history in memory only with a 1,000-entry cap, removed all `-lreadline` flags including the stale `pref2train` link, and added narrow BCR compatibility patches for Bazel 9; the full debug `//...` build succeeded without running tests.
+2026-08-10T16:53:02Z - Replaced the temporary BCR Linenoise dependency and Bazel 9 compatibility patches with a local vendored copy of `linenoise.c`, `linenoise.h`, and the BSD license under `third_party/linenoise`; application behavior remains unchanged, and the full debug `//...` build succeeded without running tests.
+2026-08-10T17:03:20Z - Made `SimplePosting::operator==` a const member, preserving its read-only behavior while avoiding C++20 reversed-comparison ambiguity warnings on newer compilers; the full debug `//...` build succeeded without running tests.
+2026-08-10T17:24:42Z - Changed the shared application filesystem walker to classify paths with `symlink_status()`, skipping symlinked files and directories and rejecting a symlink supplied as the top-level path so recursive ingestion cannot escape or cycle through links; the full debug `//...` build succeeded without running tests.
+2026-08-10T19:35:43Z - Made `fluffy` normalize carriage returns as well as newlines in its one-line result display, preventing CRLF or CR-bearing source text from overwriting address prefixes in terminals.
+2026-08-20T19:26:50+00:00 - Started the active Meadowlark completion work list: normalize JSONL filename membership to one annotation per worker data chunk and keep `@` activity metadata outside `/.` data containers; recorded the user's compile-only/commit/regression-test division of work and kept regex work deferred. No source code changed.
+2026-08-20T20:02:31+00:00 - Built a provisional implementation of the initial Meadowlark labeling changes: canonical `/` filenames and typed `@` metadata separate from data `/.` chunks, nonempty chunks with a local `//` filename, and JSONL filename membership as one interval per worker data chunk. Updated focused assertions and format documentation, including tokenless-file behavior; `//apps:meadowlark` and `//test:tests` compiled successfully without running tests. The source and test changes were subsequently restored before commit so the filename and tokenless semantics could be refined.
+2026-08-21T16:30:10+00:00 - Implemented the refined Meadowlark filename and labeling package: split lossy JSON display from validating external JSON conversion, removed unused `Txt::raw()`, framed new `/` and `//` filename text with internal JSON string tokens, kept `@` outside `/.`, made JSON filename membership worker-chunk-sized, emitted `/`, `@`, and `//` only for tokenless sources, and retained restart recognition for historical raw names. Added focused compile-time test coverage and updated the durable format guides; the full `//...` build succeeds without running tests.
+2026-08-21T17:26:58+00:00 - Addressed the first user regression run, in which 139 aggregate tests passed and three failed: restored lazy CR/LF display spacing so trailing translation fluff is discarded while internal line breaks still prevent token splices, and corrected the legacy raw-filename test to start a fresh read epoch after committing its fixture. `//src:cottontail` and `//test:tests` compile successfully without running tests.
+2026-08-21T17:43:13+00:00 - Recorded the user's successful verification of the refined Meadowlark filename and labeling change in several configurations, including indices dating from 2022, newer Hazel/Fiver indices, and a build from scratch; the user reports that the change looks good.
+2026-08-21T17:58:41+00:00 - Updated the AI documentation after final compatibility testing: expanded the internal-JSON display/conversion contract, current versus historical filename/provenance layouts, worker-chunk filename membership, bare-filename and containment queries, tokenless completion behavior, read-epoch restart semantics, future-adapter requirements, and static-shard implications. Recorded that extensive use of the existing 1.3 TB ClimbMix index also showed no problems; no source or test files were changed in this documentation pass.
+2026-08-22T21:45:12+00:00 - Added `ai/forager.md`, the agreed stepwise plan for file-oriented foraging: global `(name, tag)` definitions with top-level queries, per-file completion metadata, normalized public file APIs, transaction-neutral Forager workers, per-file atomic publication, append-like scheduling, CLI changes, legacy TF-IDF writer refusal, and preserved old-reader support. Pointed `ai/plan.md` at the design; no source or test code changed.
+2026-08-22T22:56:15+00:00 - Implemented file-oriented foraging: immutable primary `(name, tag)` definitions, per-file completion records, common current `filename` metadata with historical `file` reads, direct filename-feature query scoping, meadow-inventory selector expansion, per-file atomic worker publication, append-like scheduling, transaction-neutral Forager workers, the revised forage CLI, current-primary TF-IDF Stats lookup, global metadata-parameter reservation, and TF-IDF historical-writer-key refusal. Added focused coverage and refreshed the Meadowlark/forager guides; all 54 Bazel targets compile successfully without running tests, and no `src/` files changed.
+2026-08-23T11:48:46+00:00 - Moved each forage worker transaction's expensive `ready()` preparation back into its worker thread while retaining the completion marker and one final atomic `commit_all()`. This corrects the serial-ready regression observed in the user's successful MS MARCO build (11:23 forage versus roughly three minutes previously); the affected forage application and aggregate test binary compile successfully without running tests.
+2026-08-23T12:59:59+00:00 - Fixed working-backed, write-free Fiver transactions by serializing their empty ready state instead of returning without a commit artifact. Added focused compile-time coverage for empty commit/reactivation, all-empty merging, merging with content, and empty Fiver-to-Hazel activation; retained tokenless nonempty text as a separate deferred semantic issue. All 54 Bazel targets compile successfully without running tests.
+2026-08-23T13:13:18+00:00 - Recorded the user's successful full regression run after correcting two test-fixture mistakes in the new empty-Fiver coverage: all three test targets pass, including 149 aggregate tests covering direct empty-Fiver activation/merge/conversion and NullForager's coordinated empty worker transaction. No source behavior changed during the test corrections.
+2026-08-23T13:39:17+00:00 - Extended Fiver readiness so tokenless physical text, as well as genuinely write-free transactions, is serialized and can commit normally. Expanded focused coverage across several empty, tokenless, and tokenful Fivers, direct activation, flat and tree-shaped Fiver merges, lazy translation boundaries, and empty/tokenless/mixed Hazel conversion; compile-only verification was used.
+2026-08-23T14:06:01+00:00 - Corrected Fiver-to-Hazel text writing when tokenless Fivers precede the first token chunk: compressed raw text now begins at byte zero while the token-chunk byte anchor remains unchanged. Restored focused translation expectations showing that following dust belongs to the preceding token. All 54 Bazel targets compile successfully without running tests.
+2026-08-23T17:53:49+00:00 - Added the first post-audit file-oriented forager regression pass: immutable definitions and stored-parameter reuse, validation before definition publication, default `none` and current-primary Stats selection, multi-worker TSV filename scoping with aggregate placement, and literal legacy TF-IDF ranking plus writer refusal. Recorded the remaining fault-injection/deletion cases; `//test:tests` compiles successfully and no tests were run by the agent.
+2026-08-23T19:23:54+00:00 - Recorded the user's report that the complete regression suite and additional tests pass, converted `ai/forager.md` from a prospective plan into the durable implementation/verification reference, added the completed empty/tokenless-Fiver checkpoint, corrected stale metadata-evolution notes, and documented the short sequential `commit_all(...)` read-visibility window consistently. No source or test files were changed in this documentation pass.
+2026-08-23T20:01:52+00:00 - Moved top-level forage-query validation from `Forager::check(...)` into Meadowlark definition resolution, leaving the Forager check responsible only for validating concrete worker construction and its parameters; no behavior or metadata ordering was otherwise changed.
+2026-08-25T14:36:03+00:00 - Added basic Ubuntu/Debian installation and build instructions to the README, including the Bazelisk-as-`bazel` convention, ARM64 variant, prerequisites, and output location; formatted the initial demo with fenced commands, query sessions, metadata, and output; linked the official MS MARCO V1 collection and Castorini's matched 6,980-query dev subset, qrels, and evaluator; added a minimal TREC-to-MS-MARCO `awk` conversion and evaluation command; removed machine- and build-specific paths; and corrected minor copy errors. No source code changed.
+2026-08-25T16:46:45+00:00 - Added a prominent README pointer for coding agents to read `AGENTS.md`, removed the longer agent-oriented promotional section from the README, and condensed its key motivation into the introductory agent guidance. No source code changed.
+2026-08-26T21:37:41+00:00 - Rewrote `ai/regex.md` as the revised staged workplan: feature foundations, general append normalization, `Tokenizer` count/bow/phrase operations, literal `|...|` features, paired byte-oriented NGramTokenizer/NGramFeaturizer work, exact literal matching, and deferred regexp design. Preserved the superseded Unicode contextual-tokenizer design as a rejected plan; no source code changed.
+2026-08-26T22:26:00+00:00 - Refined the preliminary n-gram workplan: space, tab, carriage return, and newline now form both the append-separator set and the one-for-one indexed whitespace equivalence; stored bytes and translation remain exact; gram sizes one through seven are supported; and the practical default is left open between four and five pending evidence. No source code changed.
+2026-08-27T13:24:45+00:00 - Implemented indexed string-matching workplan steps 1 and 2. Corrected the `HashingFeaturizer` `INT64_MIN` boundary with one stable positive replacement; defined virtual feature `-1` through an index-wide zero-count `UniversalHopper`; prevented direct SimpleBuilder paths from storing non-positive features; centralized append normalization in public Appender and Builder operations using space, tab, carriage return, and newline as separators; and removed redundant newline insertion from Fiver and Simple concrete paths. Added focused coverage. `bazel build //...` succeeds; no tests were run.
+2026-08-27T16:22:52+00:00
+
+- Added default `Tokenizer::count`, `bow`, and `phrase` projections over
+  `split`; routed phrase expansion, token accounting, and bag-of-words
+  consumers to their explicit operations while retaining `split` for
+  address-aligned uses. Added focused default-projection coverage and verified
+  the repository with `bazel build //...`; runtime tests remain with the user.
+2026-08-27T18:10:23+00:00
+
+- Implemented indexed string-matching workplan step 4. GCL now distinguishes
+  syntactic `QUOTE` nodes from ordinary decoded `|...|` feature terms, supports
+  the agreed byte/control/Unicode escapes, canonically serializes terms through
+  `term_to_gcl`, handles quoted backslash parity, minimally normalizes phrase
+  escapes, and safely serializes tokenizer-produced phrase features. Added
+  focused parser and expansion coverage. `bazel build //...` succeeds; no
+  runtime tests were run.
+2026-08-27T19:12:45+00:00
+
+- Recorded the user's report that basic literal-feature tests pass and the
+  decision that deeper testing is unnecessary for this narrow parser change.
+2026-08-27T20:26:05+00:00
+
+- Added a deferred pre-regexp work item to revise Meadowlark code ingestion so
+  code structural elements can span source lines and n-grams can cross embedded
+  newlines, while retaining line metadata through annotations or foraging. No
+  source code changed.
+2026-08-27T23:35:14+00:00
+
+- Corrected the UTF-8 byte ranges used by JSON's internal-token predicate and
+  input sanitizer. Internal tokens are now exactly U+FDD0--U+FDD9, while
+  sanitization stops at U+FDEF and preserves valid U+FDF0--U+FDFF characters.
+  Added structural-range boundary coverage. All 54 Bazel targets compile
+  successfully; no runtime tests were run.
+2026-08-28T00:42:26+00:00
+
+- Compiled GCL `(# 1)` directly into the virtual `UniversalHopper` and rejected
+  the invalid zero-width form `(# 0)` during parsing. Added focused branch and
+  parse-error coverage. `//test:tests` compiles successfully; no runtime tests
+  were run. The user's full run passed every substantive case but exposed an
+  over-specific new diagnostic assertion because `safe_error` appends its
+  source location; the assertion now checks the stable offset prefix, and the
+  aggregate target compiles without warnings.
+2026-08-28T15:12:27+00:00
+
+- Implemented the featurizer half of indexed string-matching step 5 without a
+  tokenizer. Moved MurmurHash64A into a shared source module without changing
+  `HashingFeaturizer` values; added recipe-free `NGramFeaturizer` with typed
+  n-gram, universal, and hash-translation markers, JSON structural nulls,
+  always-hashed unmarked terms, strict hexadecimal recovery, and feature
+  translation round trips; and wired `ngram` into the general featurizer
+  factory. Added focused compile-time coverage. All 54 Bazel targets compile
+  successfully; no runtime tests were run.
+2026-08-28T16:49:49+00:00
+
+- Added an internal GCL `ERROR` expression with a dedicated message. Semantic
+  phrase-expansion failures now propagate to the root and are reported before
+  optimization or hopper construction; empty tokenizer phrases use this path,
+  and optimizer memory estimation returns zero. Added focused parser and
+  public-compilation coverage. All 54 Bazel targets compile successfully; no
+  runtime tests were run. `NGramTokenizer` remains unimplemented.
+2026-08-28T17:18:51+00:00
+
+- Implemented `NGramTokenizer` and general tokenizer-factory wiring, completing
+  indexed string-matching step 5. Recipes accept numeric or word widths from
+  one through seven, default to and canonicalize as `five`; ordinary bytes are
+  literal positions, the full U+FDD0--U+FDEF block is atomic structural nulls,
+  and grams stop at structural or supplied-element boundaries. Added explicit
+  address-aligned `split`, complete-gram `bow`, universal-tail `phrase`, token
+  counting, and skipping behavior with focused compile-time coverage. The
+  n-gram implementation keeps its fixed three-byte structural-token length
+  private; JSON retains its public length constant and now uses it in its
+  internal-token predicate. All 54 Bazel targets compile cleanly; no runtime
+  tests were run.
+2026-08-28T17:47:03+00:00
+
+- Recorded the user's report that basic `NGramTokenizer` testing works. The
+  implementation and its updated indexed string-matching plan are ready for
+  the user's commit.
+2026-08-28T18:58:56+00:00
+
+- Added n-gram Meadowlark creation through `--create ngram[:n]`, with
+  pre-creation validation and canonical word recipes. Added a recipe-bearing
+  `create_meadow` entry point that appends overrides to one shared default
+  Bigwig recipe, made empty meadow names consistently select `a.meadow`, and
+  simplified the app to one creation call and one opening call. All 54 Bazel
+  targets compile successfully; no runtime tests were run.
+2026-08-28T19:49:25+00:00
+
+- Recorded the user's successful basic end-to-end n-gram checks over `ai/` and
+  `src/`: exact punctuation-heavy C++ substrings compose with ordinary GCL to
+  recover containing source objects, `//` filenames, and fixed-width context
+  crossing a source newline. Marked literal matching as operational through
+  the existing phrase-expansion path, code ingestion across source lines as
+  the next implementation step, and exhaustive testing as the gate before
+  regexp work. No source code changed in this documentation pass.
+2026-08-29T16:30:29Z
+
+- Replaced virtual universal n-gram tails with reversible short suffix grams at
+  supplied-element and structural boundaries. Addressing and structural nulls
+  are unchanged; `split` mirrors the indexed suffixes, `bow` still selects only
+  complete grams, and `phrase` remains conservative until dictionary-backed
+  Warren expansion is available. Updated focused expectations. All 54 Bazel
+  targets compile successfully; no runtime tests were run.
+2026-08-29T16:31:00Z
+
+- Recorded the preliminary byte-oriented regexp surface: classical grouping,
+  alternation, concatenation, byte classes, dot, and the three common
+  quantifiers, along with initial escapes and explicit deferred or rejected
+  extensions. Clarified that newline is an ordinary byte and structural
+  elements, rather than source lines, bound local matching. No source code
+  changed.
+2026-08-29T16:43:00Z
+
+- Added the independent byte-regexp machine foundation. `regexp/nfa.h` exports
+  a complete lambda-free transition vector plus a reference shortest-substring
+  matcher; the compiler covers literals, grouping, union, intersection,
+  closure, dot, byte classes, and initial escapes. Added isolated
+  `//test:nfa_test` coverage rather than extending the aggregate test binary.
+  The focused target passes and all 57 Bazel targets compile successfully.
+2026-08-30T11:49:59Z
+
+- Extended `//test:nfa_test` with byte-offset cases for French and Chinese
+  UTF-8 literals, including shortest alternatives and overlapping Chinese
+  matches, plus heart-variation and robot emoji literals. The focused target
+  passes.
+2026-08-30T11:54:58Z
+
+- Added a focused pure-containment intersection case: `\n.*\n` intersected
+  with `.*[Tt]he [Tt]he.*` over longer multiline text returns the two shortest
+  qualifying newline-delimited spans, including their delimiters. The focused
+  NFA target passes.
+2026-08-30T12:02:50Z
+
+- Finalized the regexp-machine checkpoint notes: shortest-substring selection
+  is a locally defined matching semantic, while tokenization and n-gram
+  postings are separate access mechanisms for a future indexed runner.
+2026-08-30T12:50:13Z
+
+- Widened regexp transition labels to explicit 16-bit symbol sets and added
+  virtual `START` and `END` buffer events. `^` and `$` now denote the complete
+  string supplied to the reference matcher; their internal positions -1 and
+  size are removed from returned intervals. Added `\R` for LF, CRLF, U+2028,
+  and U+2029, with focused coverage for anchors, shortest nested alternatives,
+  line endings, and boundary exclusion from dot and complemented classes. The
+  focused target passes and all 57 Bazel targets compile successfully.
+2026-08-30T16:04:19+00:00
+
+- Added the preliminary `ai/cgrep.md` workplan. It separates the reusable NFA,
+  immutable flattened cgrep dispatch machine, mutable Cgrep runner, and
+  replaceable Haystack input layer; specifies the minimal no-flags application
+  and provisional output format; and records focused differential testing and
+  later mapping, rolling-buffer, process, and producer-thread paths. No source
+  code changed.
+2026-08-30T19:19:08+00:00
+
+- Refined the preliminary cgrep plan so both Haystack and Cgrep expose owning
+  and explicitly short-lived pointer forms of `translate(p,q)`. Replaced the
+  last-match-only text/view sketch, documented reclamation and invalidation,
+  and added an end-to-end Bazel `sh_test` plan for exact binary output, stdin,
+  named inputs, and exit statuses. No source code changed.
+2026-08-30T19:24:50+00:00
+
+- Replaced cgrep's provisional human-oriented output with streaming JSON
+  Lines. The normal path now uses the repository's existing JSON serializer on
+  ordinary strings; Base64 fields are reserved for values whose malformed
+  UTF-8 the strict serializer rejects. No source code changed.
+2026-08-30T19:37:59+00:00
+
+- Implemented the first flat-input cgrep cut: abstract arbitrary-chunk
+  Haystacks with whole-input file/stdin factories, an opaque shareable compiled
+  dispatch machine, the preallocated shortest-substring runner, and streaming
+  JSONL application output with strict-JSON-first Base64 fallback. Added a
+  focused differential test target and prepared an end-to-end shell test. The
+  app and focused test targets compile; runtime tests were not run. Registering
+  the shell test awaits authorization for a `rules_shell` dependency. No
+  existing source file was modified. All 59 Bazel targets compile.
+2026-08-30T20:00:55+00:00
+
+- Registered the prepared end-to-end cgrep script as
+  `//test:cgrep_app_test`, using `rules_shell` as a root-only development
+  dependency. The test target analyzes and builds successfully; it has not yet
+  been executed.
+2026-08-30T20:48:11+00:00
+
+- Added `apps/cgrep` help and a default 256-byte inline-match limit; oversized
+  matches remain visible by interval but omit untranslated match text, and
+  `--max-match 0` restores unlimited output. The user ran the focused targets:
+  `//test:cgrep_test` and `//test:cgrep_app_test` both pass.
+2026-08-30T21:58:10+00:00
+
+- Added the repository instruction to dogfood cgrep for suitable local text
+  searches, consult `ai/cgrep.md`, and record reasons for search-tool fallbacks
+  in the new `ai/cgrep-improvements.md` observation log. No source code changed.
+2026-08-30T22:02:13+00:00
+
+- Recorded the first cgrep dogfooding observations: source investigation needs
+  bounded context and line-number output, and the runner should advance its
+  Haystack reclamation limit when no active candidate remains. No source code
+  changed.
+2026-08-30T22:10:41+00:00
+
+- Added the independent `LineCgrep` engine over the shared compiled regexp
+  machine. It runs its own byte loop, queues accepted intervals, retains a
+  bounded LF-delimited line list, flushes at LF/EOF, and coordinates Haystack
+  reclamation; raw Cgrep now also advances its limit whenever no active state
+  remains. Changed the app to ordered `--lines n`/`--raw n` policies with
+  `--lines 4` as the default and zero as unlimited. All 60 targets compile; the
+  15-case focused C++ binary and end-to-end application script pass.
+2026-08-31T16:04:15+00:00
+- Revised the cgrep command help to describe the default line-reporting and
+  explicit raw-byte-stream modes directly; compile-checked `//apps:cgrep`.
+
+2026-09-02T19:09:31+00:00
+- Changed raw and line cgrep reclamation to notify Haystacks on
+  active-to-empty transitions and chunk boundaries, suppressing repeated
+  watermarks instead of making a virtual `limit()` call for every inactive
+  byte. Added focused call-sequence coverage and compile-checked
+  `//apps:cgrep` and `//test:cgrep_test` without running tests.
+
+2026-09-04T20:43:30Z
+- Added a raw Cgrep literal specialization: reduce byte-chain NFAs to strings,
+  seek forward across chunks, tighten backward through retained history, and
+  accept intervals with the literal's exact length. Failed candidates resume
+  at the next byte; exact matches use a simple precomputed self-overlap shift.
+  Release history before each tightened start while preserving returned text.
+  Added focused coverage with relocating/trimming Haystacks and updated the
+  workplan. The app and focused C++ target compile; tests and timings were not
+  run.
+
+2026-09-04T20:51:22Z
+- Added `--springy` and `--no-springy` to compare raw literal matching with
+  the general dispatch runner, keeping springy enabled by default. The option
+  is passed to machine compilation and is independent of output policy.
+  Added comparison coverage and help text; the app and both focused test
+  targets compile. Tests were not run.
+
+2026-09-04T20:55:34Z
+- For the requested output experiment, raw `--springy` now prints filename,
+  inclusive offsets, and permitted match text directly with `std::cout`.
+  Raw `--no-springy` and line mode retain JSONL. Updated the application
+  expectations and documented the temporary format; `//apps:cgrep` compiles.
+  Runtime tests were not run.
+
+2026-09-04T20:57:33Z
+- Restored shared JSONL output for both raw runners after the user reported
+  that the direct stream output experiment did not explain the slowdown.
+  Kept the springy selection flags and restored the JSONL test expectations.
+  The app and application test target compile; runtime tests were not run.
+
+2026-09-04T21:09:29Z
+- Added `--no-match` for timing Haystack loading without matching or output.
+  It keeps the regexp argument and compilation, consumes all chunks from
+  each file or stdin, and returns zero on success or two on error. Updated
+  help, documentation, and application expectations; the app and application
+  test target compile. Runtime tests and timings were not run.
+
+2026-09-04T21:25:38Z
+- Replaced Haystack's character-iterator loading with bulk 64 KiB stream
+  reads into the existing owned string. Files and stdin still load completely
+  and publish one chunk; no rolling-buffer management was added. Prepared an
+  application case crossing a bulk-read boundary. The app and focused targets
+  compile; runtime tests and timings were not run.
+
+2026-09-04T21:37:08Z
+- Changed seekable-file Haystack loading to obtain the size, allocate one
+  uninitialized character buffer, and read directly into it in one call.
+  Stdin and unsized sources retain the bulk-read fallback. Whole-input
+  publication and reset behavior remain. The app and focused targets compile;
+  runtime tests and timings were not run.
+
+2026-09-04T21:40:36Z
+- Removed the redundant file-open check from `Haystack::make`. The filename
+  factory now opens and loads once and returns open/read errors immediately.
+  The app and focused targets compile; runtime tests were not run.
+
+2026-09-20T20:21:15Z
+- Added opt-in `CGREP_LOG` startup logging to `apps/cgrep`: append replayable
+  shell-quoted arguments without the executable name, silently ignoring logging
+  failures. Added focused app regression cases for quoting, append behavior,
+  invalid invocations, and logging failures. Matching engines are unchanged.
+  The app and app-test target build with the fast flags; shell syntax and diff
+  checks pass. Runtime tests were not run.
+
+2026-09-20T20:38:11Z
+- Reconciled the regexp and cgrep agent documentation with the current typed
+  machine caches, buffer/Haystack runners, reporting, and indexed foundations.
+  Removed obsolete implementation plans and flags, preserved the preliminary
+  frontier discussion and its correctness questions, and documented private
+  search collection through `CGREP_LOG`. Made shipping Meadowlark the active
+  direction in `ai/plan.md`, with indexed regexp work and workload-driven
+  optimizations parked for later. This cleanup changed only agent notes;
+  source/test files were untouched, and no builds or runtime tests were run.
+
+2026-09-26T16:47:47Z
+- Added always-on `affirm` for the six direct side-effect assertions: Fiver's
+  commit link, four text-recovery truncations, and Stats tokenizer assignment.
+  The final helper uses `__FILE__`/`__LINE__` through a macro, matching
+  `safe_error`, with an optional diagnostic followed by abort. Meadowlark and
+  the aggregate test target compile with optimization and `-DNDEBUG`; runtime
+  tests remain with the user. Also ignored the local `cgrep.log` and removed
+  it from Git's index while preserving the local file.
+
+2026-09-26T16:58:57Z
+- Changed the missing-tokenizer path in `Stats::make` to set `safe_error(error)`
+  and return `nullptr` instead of aborting through `affirm`. The tokenizer
+  assignment still executes under `NDEBUG`. Meadowlark and the aggregate test
+  target compile with optimization and `-DNDEBUG`; runtime tests were not run.
+
+2026-09-26T17:19:01Z
+- Added the missing null check after `Warren::make` in `open_meadow`, returning
+  the existing open error instead of dereferencing a null Warren. Meadowlark
+  and the aggregate test target compile with optimization and `-DNDEBUG`;
+  runtime tests were not run.
+
+2026-09-27T13:32:27Z
+- Reorganized application sources into current utilities in `apps/`, historical
+  experiments and benchmarks (including both SPLADE tools) in `expr/`,
+  and the paper's TREC-update and JSON-table programs with their supporting
+  builder/report script in `iirj/`. Moved shared `collection.*` and `walk.*`
+  helpers into `src/` and updated includes, header guards, Bazel packages,
+  the dynamic-test script's executable path, and the source-archive manifest.
+  Updated README and current agent notes; historical log paths remain intact.
+  All 42 binary targets are preserved. Verified moved-file contents and script
+  modes, shell syntax, and `bazel build -c opt --cxxopt=-DNDEBUG //...`.
+  No runtime tests or experiments were run, and no commit was made.
+
+2026-09-27T14:31:37Z
+- Added README files to `apps/`, `expr/`, and `iirj/` describing their purposes
+  and build locations. The IIRJ README identifies both paper experiments and
+  repeats the citation from the main README. Documentation-only change.
+
+2026-09-29T00:03:17Z
+- Reviewed current agent documentation against the reorganized tree and recent
+  code. Updated the active checkpoint, completed assertion/open-error fixes,
+  focused test inventory, ignored cgrep log, and large-JSONL splitting guidance.
+  Recorded the SPLADE direction as discussed, not approved implementation work.
+  Left architecture and historical log entries unchanged. Documentation-only;
+  no builds or runtime tests were run.
+
+2026-09-29T17:05:59Z
+- Recorded the first SPLADE batch interface discussion in `ai/plan.md`: reuse
+  JSON numeric-field annotations directly, default depth to 1000, and put
+  error first among optional arguments. Noted the accompanying `trec` header
+  defaults fix. No source changes or implementation authorization.
+
+2026-09-30T13:31:58Z
+- Added `ai/performance.md` with the user's initial SPLADE ranking baseline:
+  6,980 queries, 1,308,305 ms, approximately 5.34 queries/sec, and MRR@10
+  0.3832077477600405. Recorded missing run settings and the proposed linked-list
+  traversal separately from measured behavior. Linked it from `ai/notes.md`.
+  Documentation only; no code changes, builds, or runtime tests.
+
+2026-09-30T13:37:28Z
+- Replaced SPLADE's repeated all-hopper scans with the agreed vector-owned,
+  position-ordered raw-pointer list. Cache current weighted contributions,
+  score the current document's prefix, then advance and reinsert only those
+  hoppers. Documented nonoverlapping containers and unique single-position
+  vector labels. Preserved ignoring fields outside selected containers and
+  bounded top-k selection; no pruning was added.
+- Replaced the overlapping-container test with ordered-list traversal cases,
+  expanded scoped-gap and overflow checks, and extended the exhaustive oracle
+  to 35 labels with rotating physical field order. Updated the plan and
+  performance record, retaining the original 1,308,305 ms baseline.
+- Optimized compilation passed with `bazel build -c opt --cxxopt=-DNDEBUG
+  //apps:splade //test:splade_test //test:splade_app_test`. Tests and performance
+  runs remain with the user; no runtime checks or commits were performed.
+
+2026-09-30T13:58:37Z
+- Recorded the user's linked-list SPLADE run in `ai/performance.md`: 529,972 ms
+  ranking time, 535,492 ms whole-process elapsed, 6,980 queries at depth 10,
+  approximately 13.17 queries/sec, and unchanged MRR@10 0.3832077477600405.
+  Preserved the full command and CPU timings; the observed ranking-time
+  speedup over 1,308,305 ms is 2.47x. Updated the plan's verification status.
+  Documentation only; no agent-run tests or benchmarks.
+
+2026-09-30T14:19:02Z
+- Renamed `ai/performance.md` to `ai/splade.md` and updated current references
+  in notes and plan. Preserved historical log entries and all measurements.
+
+2026-10-28T16:00:23Z
+- Fixed the local `apps/ssr-web.py` demo to unwrap SSR response records,
+  propagate server errors, and use `document` for full-document requests.
+  Result timing displays the server's envelope `time` value in milliseconds.
+  Python compilation and embedded JavaScript syntax checks passed; no runtime
+  tests or server sessions were run.
+
+2026-10-28T16:27:42Z
+- At the user's request, checked the running SSR web demo on localhost:8080.
+  Its served page contains the corrected protocol handling. A `waterloo`
+  query and a subsequent `document` request through `/api` succeeded for
+  `shard_01978_29812`: HTTP 200, 73,805 document characters, and server-reported
+  document time of 127 ms. This verified the HTTP/proxy path, not browser
+  interaction; the reported browser hang was not reproduced. No source edits.
+
+2026-10-28T16:35:52Z
+- Renamed the SSR web demo heading and browser title to "SSR agentic search
+  raw interface demo". Added a latest-response panel showing the complete JSON
+  envelope with indentation, including error responses and server timing;
+  existing search and document controls remain available. JSON is rendered as
+  literal text. Python compilation and embedded JavaScript syntax checks
+  passed; no runtime checks were run for this change.
+
+2026-10-28T16:43:27Z
+- Set `autocomplete="off"` on the SSR web demo query field at the user's
+  request. HTML attribute change only; no runtime checks were run.
+
+2026-10-28T16:44:36Z
+- Set the SSR web demo's visible heading and browser title to the user's exact
+  wording: "Cottontail Boolean SRR agentic search (raw interface demo)".
+
+2026-10-28T16:46:20Z
+- Made raw JSON the SSR web demo's sole response display, removing the
+  separately rendered passage and full-document text. Navigation restores each
+  result's complete response envelope; the full-document button switches to
+  its document envelope and back. Server timing remains in the original JSON.
+  Python compilation and embedded JavaScript syntax checks passed; no runtime
+  checks were run for this change.
+
+2026-10-28T16:48:00Z
+- Removed Previous and browser result history from the SSR web demo. Full
+  document and Next result now sit directly below the search form. Each action
+  replaces the sole JSON display; full-document requests use the current
+  result's identifier. Python compilation and embedded JavaScript syntax
+  checks passed; no runtime checks were run.
+
+2026-10-28T16:50:53Z
+- Added "Agent actions" beside the SSR web demo buttons and removed the
+  separate status, result identifier, and JSON heading. The single JSON view
+  now bolds text between cover tags while preserving both literal tags and
+  all JSON text, using text nodes rather than HTML interpretation. Python
+  compilation and embedded JavaScript syntax checks passed; no runtime checks
+  were run.
+
+2026-10-28T16:55:55Z
+- Kept "Enter a Boolean query" and added the user's example
+  `(^ black bears (+ attack attack))` to the query placeholder. Submitting an
+  empty or whitespace-only field now sends that example. Python compilation
+  and embedded JavaScript syntax checks passed; no runtime checks were run.
+
+2026-10-28T16:57:26Z
+- Changed the example query to `(^ black bear (+ attack attack))` and copy
+  the submitted query into the input, making the default example editable
+  alongside results. Python compilation and embedded JavaScript syntax checks
+  passed; no runtime checks were run.
+
+2026-10-28T17:01:01Z
+- Disabled Full document while its successful response is displayed in the
+  SSR web demo. Subsequent results re-enable it, and failed document requests
+  remain retryable. Python compilation and embedded JavaScript syntax checks
+  passed; no runtime checks were run.
+
+2026-10-28T17:30:33Z
+- Added `--info` to the SSR web demo to customize the parenthetical text in
+  its visible heading and browser title, defaulting to "raw interface demo".
+  The supplied text is HTML-escaped when rendering the page. Python compilation
+  and embedded JavaScript syntax checks passed; no runtime checks were run.
+
+2026-10-31T18:40:16Z
+- Corrected the SSR web demo's placeholder and default query to
+  `(^ black bear (+ attack attacks))`. Text-only change; no runtime checks.
+
+2026-10-31T18:50:21Z
+- Prepared the SSR web demo for the user's commit and push. Added launch,
+  `--info`, SSH forwarding, single-client, and restart instructions to
+  `apps/README.md`; recorded the completed demo in agent notes and the plan.
+  Reviewed the complete new script, confirmed its executable mode, and passed
+  Python compilation, embedded JavaScript syntax, and whitespace checks.
+  No new runtime tests, source changes, commits, or pushes were performed.
+
+2026-10-31T18:53:34Z
+- Created `ssr-demo/README.md` and moved the demo instructions there from
+  `apps/README.md`, leaving a link. Clarified repository-root commands, example
+  ports, and SSH forwarding. Updated agent references and recorded building
+  out the demo support directory as the next step. Documentation only;
+  application sources remain in `apps/`.
+
+2026-10-31T20:36:26Z
+- Added a prominent demo-video link in `ssr-demo/README.md` to the supplied
+  `ssr-server.mp4`, including its format and approximate size. Documentation
+  only; confirmed the relative link target exists and checked whitespace.
+
+2026-10-31T20:39:23Z
+- Documented C++ and Python SSR clients, their launch commands and interactive
+  actions, and direct agent use in `ssr-demo/README.md`. Verified client behavior
+  from source and linked TheVole and RAG2026 using their public README
+  descriptions. Clarified switching between the web app and other clients.
+  Documentation only; whitespace checks passed.
+
+2026-11-01T21:00:22Z
+- Added a link to `meadowlark/` in the main README repository overview to
+  identify the Meadowlark-specific code. Preserved the user's demo-label edit.
+
+2026-10-31T20:45:48Z
+- Replaced the demo README's repository-file video link with the user's
+  GitHub attachment URL on its own line for inline video playback. Kept the
+  repository MP4 unchanged. Documentation only; whitespace checks passed.
+
+2026-10-31T20:53:10Z
+- Added executable `ssr-demo/climbix.sh`, accepting source and target
+  directories and using `meadowlark` and `consolidate` from `PATH`. Preserved
+  all twelve original ClimbMix file groupings, building directly into numbered
+  target meadows and consolidating each before the next ingestion. Added checks
+  for missing commands, existing outputs, and missing/unreadable input files.
+- Documented setup, usage, and failure behavior in the demo README and updated
+  agent notes and the plan. Shell syntax and whitespace checks passed; static
+  comparison confirmed every grouping matches the original external script.
+  No ingestion, consolidation, runtime tests, or benchmarks were run.
+
+2026-10-31T20:54:11Z
+- Added the user's ClimbMix SSR launch command to the demo README, specifying
+  the target index working directory, field meanings, and use of the printed
+  port by clients. Included the SSR server in the prerequisite build command.
+  Documentation only; whitespace checks passed.
+
+2026-10-31T20:59:10Z
+- Made `ssr-demo/climbix.sh` restartable by creating all missing numbered
+  meadows before ingestion, reopening existing ones without `--create`, and
+  relying on Meadowlark's source-completion records and consolidation recovery.
+  Removed the existing-output refusal. Updated the README and agent notes to
+  describe rerunning with the same source files and directories after failure.
+  Shell syntax and whitespace checks passed; no collection build or runtime
+  recovery checks were run.
+
+2026-10-31T21:03:21Z
+- Resolved the demo README's rebase conflict between the GitHub video-link
+  edit and local demo additions. Kept the attachment URL on its own line for
+  inline playback and preserved the collection-build and restart instructions.
+  Whitespace checks passed; staging and rebase continuation remain with the user.
+
+2026-11-01T15:35:59Z
+- Added an opening sentence to `ssr-demo/README.md` linking the demo to the
+  main Cottontail repository. Documentation only; whitespace checks passed.
+
+2026-11-01T16:00:58Z
+- Rewrote the main README introduction around Cottontail as a unified storage
+  substrate for agentic search and Meadowlark metadata for database discovery.
+  Scoped the ACID wording to individual transactions and framed a universal
+  standard for agentic stores as a long-term goal. Kept the paper citation,
+  repository layout, and coding-agent notice.
+- Moved the MS MARCO walkthrough to `msm-demo.md`, added links to both demos,
+  and updated `apps/README.md`. Verified the walkthrough was preserved except
+  for its heading and installation link, the Installation section is unchanged,
+  local Markdown links resolve, and whitespace checks pass. Documentation only;
+  no builds or runtime tests were run.
+
+2026-11-01T16:07:20Z
+- Moved the README coding-agent notice directly below the title and updated
+  `AGENTS.md` with the goal of a unified storage substrate for agentic search,
+  Meadowlark's database-discovery role, and the long-term agentic-store goal.
+  Preserved the existing working rules. Documentation only; whitespace checks
+  passed.
+
+2026-11-01T16:12:20Z
+- With explicit user authorization, added Meadowlark's metadata and discovery
+  role to `ai/architecture.md`, linked its detailed conventions and exploration
+  guide, and connected the architectural purpose to the agentic-search substrate
+  goal. Documentation only; whitespace checks passed.
+
+2026-11-01T20:58:45Z
+- Indented the main README paper citation as a blockquote and moved the `iirj/`
+  examples into the demo list, shortening the repository-layout paragraph.
+  Documentation only; whitespace checks passed.
+
+2026-11-09T16:59:00+01:00
+- Added query and result metadata to `apps/ssr-server`: `SExpression::extract_terms`
+  collects leaf terms after phrase expansion, `RankingResult` records per-container
+  cover counts (`covers()`), and `ssr_ranking`/`parallel_ssr` accept an optional
+  `SsrStats` output for uncapped `matched_containers` and `total_covers`.
+  `ssr-server` now reports `total_results`, `matched_containers`, `total_covers`,
+  and `terms` on `query` responses, and `total_results`, `result_covers`,
+  `cover_tokens`, and `content_tokens` on result responses. Compile-checked
+  modified translation units; no runtime tests were run.
